@@ -1,0 +1,1569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Information Theory — A Visual Tour (DLFC §2.5)</title>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],throwOnError:false});"></script>
+
+<style>
+:root{
+  --bg:#0c0c12; --bg2:#13131d; --panel:#15151f; --panel2:#1b1b27;
+  --ink:#e7e7f0; --muted:#9a9ab0; --faint:#4a4a5e; --line:#2a2a3a;
+  --blue:#5ec8e8; --yellow:#f6c945; --red:#fc6a5d; --green:#84d98a;
+  --purple:#c08cf0; --teal:#54d6bd; --orange:#f49d52;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:radial-gradient(1200px 800px at 70% -10%, #161629 0%, var(--bg) 55%) fixed;
+  color:var(--ink);
+  font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  line-height:1.65; font-size:16px; -webkit-font-smoothing:antialiased;
+}
+a{color:var(--blue);text-decoration:none}
+a:hover{text-decoration:underline}
+code,.mono{font-family:ui-monospace,"JetBrains Mono","SF Mono",Menlo,Consolas,monospace}
+
+/* ---- nav ---- */
+nav{
+  position:sticky; top:0; z-index:50; backdrop-filter:blur(10px);
+  background:rgba(10,10,16,.72); border-bottom:1px solid var(--line);
+}
+nav .inner{max-width:1000px;margin:0 auto;display:flex;flex-wrap:wrap;gap:2px 14px;
+  padding:9px 22px;font-size:12.5px}
+nav .brand{color:var(--muted);font-weight:700;letter-spacing:.4px;margin-right:8px}
+nav a{color:var(--muted);padding:2px 4px;border-radius:5px}
+nav a:hover{color:var(--ink);background:#ffffff10;text-decoration:none}
+
+main{max-width:1000px;margin:0 auto;padding:0 22px 120px}
+
+/* ---- hero ---- */
+header.hero{padding:78px 0 38px;border-bottom:1px solid var(--line);margin-bottom:18px}
+.kicker{color:var(--teal);font-weight:700;letter-spacing:3px;font-size:12px;text-transform:uppercase}
+h1{font-size:clamp(30px,5vw,52px);line-height:1.08;margin:.25em 0 .15em;font-weight:800;
+  background:linear-gradient(95deg,#fff 10%,var(--blue) 55%,var(--purple) 95%);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{color:var(--muted);max-width:70ch;font-size:17px}
+
+section{padding:46px 0 12px;border-top:1px solid var(--line);margin-top:30px}
+section:first-of-type{border-top:none}
+h2{font-size:27px;margin:.1em 0 .1em;font-weight:750;letter-spacing:-.2px}
+h2 .num{color:var(--teal);font-weight:800;margin-right:.5ch;font-variant-numeric:tabular-nums}
+h3{font-size:18px;color:var(--ink);margin:1.4em 0 .3em;font-weight:700}
+.lead{color:var(--muted);max-width:74ch}
+p{max-width:74ch}
+.small{font-size:14px;color:var(--muted)}
+ul{max-width:74ch;color:var(--ink)}
+li{margin:.18em 0}
+b,strong{color:#fff;font-weight:650}
+
+/* ---- figure card ---- */
+.fig{background:linear-gradient(180deg,var(--panel) 0%,var(--panel2) 100%);
+  border:1px solid var(--line);border-radius:16px;padding:20px;margin:22px 0 8px;
+  box-shadow:0 12px 40px -22px #000, inset 0 1px 0 #ffffff08}
+.fig canvas{display:block;border-radius:8px;touch-action:none}
+.fig .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:center}
+@media(max-width:760px){.fig .grid2{grid-template-columns:1fr}}
+.figcap{font-size:13.5px;color:var(--muted);margin-top:12px;border-top:1px dashed var(--line);padding-top:10px}
+.figcap b{color:var(--ink)}
+
+/* ---- controls ---- */
+.ctrls{display:flex;flex-wrap:wrap;gap:14px 26px;align-items:center;margin-top:14px}
+.ctrl{display:flex;flex-direction:column;gap:3px;min-width:170px}
+.ctrl label{font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:10px}
+.ctrl label .v{color:var(--blue);font-variant-numeric:tabular-nums}
+input[type=range]{-webkit-appearance:none;appearance:none;height:5px;border-radius:4px;
+  background:#2c2c3e;outline:none;cursor:pointer;width:100%}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;
+  background:var(--blue);border:2px solid #0b0b12;box-shadow:0 0 0 1px var(--blue),0 0 12px var(--blue)}
+input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:var(--blue);
+  border:2px solid #0b0b12;box-shadow:0 0 10px var(--blue)}
+button{font-family:inherit;font-size:13px;color:var(--ink);background:#23233360;
+  border:1px solid var(--line);border-radius:9px;padding:8px 13px;cursor:pointer;transition:.15s}
+button:hover{background:#2e2e44;border-color:#444}
+button.accent{border-color:var(--teal);color:#bff5e9}
+button.accent:hover{background:#163b36}
+button.warm{border-color:var(--orange);color:#ffd9b0}
+button.warm:hover{background:#3a2a14}
+
+/* ---- readouts ---- */
+.readouts{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.ro{background:#0e0e16;border:1px solid var(--line);border-radius:10px;padding:8px 13px;min-width:118px}
+.ro .lab{font-size:11px;color:var(--muted);letter-spacing:.4px}
+.ro .num{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;
+  font-family:ui-monospace,monospace}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle}
+
+.callout{background:#10101a;border-left:3px solid var(--purple);border-radius:0 10px 10px 0;
+  padding:12px 16px;margin:16px 0;color:var(--ink)}
+.callout .t{color:var(--purple);font-weight:700;font-size:13px;letter-spacing:.4px;text-transform:uppercase}
+.aha{border-left-color:var(--yellow)}
+.aha .t{color:var(--yellow)}
+.aha .t::before{content:"💡 "}
+hr.soft{border:none;border-top:1px solid var(--line);margin:34px 0}
+.tag{display:inline-block;font-size:11px;color:var(--teal);border:1px solid #234;border-radius:20px;
+  padding:1px 9px;margin-left:8px;vertical-align:middle;background:#0d1b1a}
+.footer{color:var(--faint);font-size:13px;text-align:center;padding-top:40px}
+katex{font-size:1.04em}
+
+/* ---- tabbed deep-dive ---- */
+.deepdive{margin-top:8px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;border-bottom:1px solid var(--line);margin:22px 0 0}
+.tab{padding:11px 18px;cursor:pointer;color:var(--muted);background:transparent;border:1px solid transparent;
+  border-bottom:none;border-radius:11px 11px 0 0;font-weight:700;font-size:14px;transition:.15s;position:relative;top:1px;user-select:none}
+.tab:hover{color:var(--ink)}
+.tab.active{color:var(--ink);background:linear-gradient(180deg,var(--panel) 0%,var(--panel2) 100%);border-color:var(--line)}
+.tab .accent-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;vertical-align:middle}
+.tabpanel{display:none;animation:fade .25s ease}
+.tabpanel.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.lesson{margin:26px 0 6px}
+.lesson .ltag{font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase}
+.lesson h4{font-size:19px;margin:.15em 0 .35em;font-weight:750}
+.steps{counter-reset:s;list-style:none;padding-left:0;max-width:78ch}
+.steps li{counter-increment:s;position:relative;padding-left:40px;margin:.55em 0}
+.steps li::before{content:counter(s);position:absolute;left:0;top:1px;width:26px;height:26px;border-radius:50%;
+  background:#1d1d2b;border:1px solid var(--line);color:var(--teal);font-size:12px;font-weight:800;
+  display:flex;align-items:center;justify-content:center}
+.eqbox{background:#0a0a12;border:1px solid var(--line);border-radius:12px;padding:4px 18px;margin:14px 0;overflow-x:auto}
+.legend{display:flex;flex-wrap:wrap;gap:16px;margin:10px 0 2px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend i{width:13px;height:13px;border-radius:3px;display:inline-block}
+.cc-blue{color:#5ec8e8}.cc-teal{color:#54d6bd}.cc-gold{color:#f6c945}.cc-green{color:#84d98a}
+.cc-red{color:#fc6a5d}.cc-purple{color:#c08cf0}.cc-orange{color:#f49d52}.cc-grey{color:#8a8a9c}
+</style>
+</head>
+<body>
+
+<nav><div class="inner">
+  <span class="brand">§2.5 INFORMATION THEORY</span>
+  <a href="#surprise">Surprise</a>
+  <a href="#entropy">Entropy</a>
+  <a href="#coding">Coding</a>
+  <a href="#physics">Microstates</a>
+  <a href="#diff">Differential</a>
+  <a href="#maxent">Max-Entropy</a>
+  <a href="#kl">KL Divergence</a>
+  <a href="#modes">Fwd vs Rev KL</a>
+  <a href="#llm">LLM Algos</a>
+  <a href="#mi">Mutual Info</a>
+</div></nav>
+
+<main>
+
+<header class="hero">
+  <div class="kicker">Deep Learning · Foundations &amp; Concepts — Chapter 2</div>
+  <h1>Information Theory,<br>made visual</h1>
+  <p>A hands-on tour of §2.5 — surprise, entropy, KL divergence and mutual information.
+  Every figure is live: drag the bars, push the sliders, watch the math move. The goal is the
+  <i>feel</i> of each quantity before the symbols. Built to pair with your chapter notes.</p>
+</header>
+
+<!-- ===================================================================== -->
+<section id="surprise">
+  <h2><span class="num">1</span>Surprise: how shocked should you be?<span class="tag">h(x) = −log p(x)</span></h2>
+  <p class="lead">Information theory starts with one question: <b>when an event happens, how much did you learn?</b>
+  A sunrise tells you nothing — you knew it was coming. A coin landing on its edge tells you a lot.
+  So "information" should be large when probability is small. Bishop writes this as the
+  <b>surprise</b> (information content) $h(x) = -\log_2 p(x)$, measured in <b>bits</b>.</p>
+
+  <div class="fig">
+    <div class="grid2">
+      <div><canvas id="cv_surprise"></canvas></div>
+      <div>
+        <p style="margin-top:0">Slide the probability of an event and watch its surprise.
+        At $p=\tfrac12$ a coin flip carries exactly <b>1 bit</b>. A 1-in-1024 event carries <b>10 bits</b>.
+        As $p\to0$, surprise $\to\infty$.</p>
+        <div class="ctrls">
+          <div class="ctrl">
+            <label>probability <span class="v" id="v_psurp">0.50</span></label>
+            <input id="sl_psurp" type="range" min="0.001" max="1" step="0.001" value="0.5">
+          </div>
+        </div>
+        <div class="readouts">
+          <div class="ro"><div class="lab">SURPRISE</div><div class="num" id="ro_surp" style="color:var(--red)">1.00</div></div>
+          <div class="ro"><div class="lab">"1 IN N"</div><div class="num" id="ro_oneinn" style="color:var(--blue)">2</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="figcap"><b>Why a logarithm?</b> Surprise must be <i>additive</i> for independent events: learning two
+    independent things should give you the sum of their information. But independent probabilities
+    <i>multiply</i>. The only function turning multiplication into addition is the log:
+    $-\log(p_1 p_2) = -\log p_1 - \log p_2$. The slider below proves it to you.</div>
+
+    <div class="grid2" style="margin-top:18px">
+      <div>
+        <div class="ctrls" style="flex-direction:column;align-items:stretch">
+          <div class="ctrl" style="min-width:100%">
+            <label>event A: $p_1$ <span class="v" id="v_p1">0.25</span></label>
+            <input id="sl_p1" type="range" min="0.02" max="1" step="0.01" value="0.25">
+          </div>
+          <div class="ctrl" style="min-width:100%">
+            <label>event B: $p_2$ <span class="v" id="v_p2">0.50</span></label>
+            <input id="sl_p2" type="range" min="0.02" max="1" step="0.01" value="0.50">
+          </div>
+        </div>
+      </div>
+      <div class="readouts">
+        <div class="ro"><div class="lab">h(A)+h(B)</div><div class="num" id="ro_sum" style="color:var(--yellow)">3.00</div></div>
+        <div class="ro"><div class="lab">h(A and B)</div><div class="num" id="ro_joint" style="color:var(--green)">3.00</div></div>
+        <div class="ro" style="min-width:160px"><div class="lab">p₁·p₂</div><div class="num mono" id="ro_pp" style="color:var(--muted);font-size:15px">0.125</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section id="entropy">
+  <h2><span class="num">2</span>Entropy: surprise you expect <i>before</i> looking<span class="tag">H[x] = −Σ p log p</span></h2>
+  <p class="lead"><b>Surprise</b> is per-outcome. <b>Entropy</b> is the average surprise of the whole distribution —
+  how uncertain you are <i>before</i> the draw. It's the expectation of $h(x)$:
+  $H[x] = -\sum_x p(x)\log_2 p(x)$. Two anchors: a sure thing has $H=0$ (no surprise possible),
+  and the <b>uniform</b> distribution maximizes entropy ($H=\log_2 M$ for $M$ outcomes).</p>
+
+  <h3>2a · The two-outcome case (a biased coin)</h3>
+  <div class="fig">
+    <div class="grid2">
+      <div><canvas id="cv_binent"></canvas></div>
+      <div>
+        <p style="margin-top:0">For a coin with $P(\text{heads})=p$, entropy traces the famous
+        <b>binary entropy</b> curve. It peaks at $p=\tfrac12$ (a fair coin: maximum uncertainty, 1 bit)
+        and falls to 0 at both ends (a rigged coin: no uncertainty).</p>
+        <div class="ctrls">
+          <div class="ctrl">
+            <label>P(heads) = <span class="v" id="v_bin">0.50</span></label>
+            <input id="sl_bin" type="range" min="0" max="1" step="0.001" value="0.5">
+          </div>
+        </div>
+        <div class="readouts">
+          <div class="ro"><div class="lab">ENTROPY (bits)</div><div class="num" id="ro_bin" style="color:var(--blue)">1.000</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>2b · Many outcomes — drag the bars</h3>
+  <div class="fig">
+    <canvas id="cv_entbars"></canvas>
+    <div class="ctrls">
+      <button id="b_unif" class="accent">↔ Make uniform (max H)</button>
+      <button id="b_peak">↑ Make peaked (min H)</button>
+      <button id="b_rand">🎲 Randomize</button>
+    </div>
+    <div class="readouts">
+      <div class="ro"><div class="lab">ENTROPY H (bits)</div><div class="num" id="ro_eb" style="color:var(--blue)">3.000</div></div>
+      <div class="ro"><div class="lab">MAX POSSIBLE log₂8</div><div class="num mono" id="ro_ebmax" style="color:var(--muted);font-size:18px">3.000</div></div>
+    </div>
+    <div class="figcap"><b>Grab any bar and drag it.</b> Tall thin bars = the white outline overlay shows each
+    outcome's contribution $-p_k\log_2 p_k$. Concentrating mass into one bar drives $H$ down;
+    spreading it out drives $H$ up to the dashed ceiling. <b>Uncertainty = spread.</b></div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section id="coding">
+  <h2><span class="num">3</span>Entropy is a coding budget<span class="tag">Shannon, 1948</span></h2>
+  <p class="lead">Entropy isn't abstract — it's the <b>fewest bits per symbol</b> any code can achieve.
+  Shannon's noiseless coding theorem says the optimal codeword length for a symbol of probability $p$ is
+  $-\log_2 p$ bits: <b>frequent symbols get short codes, rare ones get long codes.</b> The average code length
+  then equals the entropy. (This is exactly the intuition behind BPE tokenization and why perplexity matters.)</p>
+
+  <div class="fig">
+    <canvas id="cv_coding"></canvas>
+    <div class="figcap"><b>Drag the bars</b> to change symbol frequencies. Each block's <b>width</b> is its probability
+    $p_k$ and its <b>height</b> is its ideal code length $-\log_2 p_k$. So each block's <b>area</b> is
+    $p_k\cdot(-\log_2 p_k)$ — and the total shaded area <i>is</i> the entropy: the average number of bits to transmit one symbol.
+    Common symbols are wide and short; rare ones are thin and tall.</div>
+    <div class="readouts">
+      <div class="ro"><div class="lab">AVG BITS / SYMBOL = H</div><div class="num" id="ro_code" style="color:var(--green)">1.95</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section id="physics">
+  <h2><span class="num">4</span>Where the formula comes from: counting arrangements</h2>
+  <p class="lead">Bishop's §2.5.2 derives entropy from physics. Throw $N$ objects into bins. A
+  <b>macrostate</b> is just the histogram of counts $\{n_i\}$; its <b>multiplicity</b> $W = N!/\prod_i n_i!$
+  counts how many distinct arrangements produce it. Take logs, apply Stirling, and out pops
+  $\frac1N\ln W \to -\sum_i p_i \ln p_i = H$. <b>The uniform histogram has overwhelmingly the most arrangements</b> —
+  which is why disorder (and entropy) is what you generically see.</p>
+
+  <div class="fig">
+    <canvas id="cv_micro"></canvas>
+    <div class="ctrls">
+      <div class="ctrl">
+        <label># objects N <span class="v" id="v_N">120</span></label>
+        <input id="sl_N" type="range" min="8" max="2000" step="1" value="120">
+      </div>
+      <div class="ctrl">
+        <label>peakiness <span class="v" id="v_peak">0.00</span></label>
+        <input id="sl_peakn" type="range" min="0" max="3" step="0.01" value="0">
+      </div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><div class="lab">(1/N) ln W</div><div class="num" id="ro_lnw" style="color:var(--orange)">2.07</div></div>
+      <div class="ro"><div class="lab">ENTROPY −Σp ln p</div><div class="num" id="ro_Hphys" style="color:var(--blue)">2.08</div></div>
+      <div class="ro"><div class="lab">ln W (total)</div><div class="num mono" id="ro_lnwtot" style="color:var(--muted);font-size:15px">248</div></div>
+    </div>
+    <div class="figcap"><b>Crank up N</b> and the two readouts converge — that's Stirling's approximation turning
+    arrangement-counting into entropy. <b>Crank up "peakiness"</b> and watch both the multiplicity <i>and</i> the
+    entropy collapse: a lopsided histogram can be made far fewer ways than a flat one.</div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section id="diff">
+  <h2><span class="num">5</span>Continuous entropy can go negative<span class="tag">differential entropy</span></h2>
+  <p class="lead">For continuous variables, $H[x] = -\int p(x)\ln p(x)\,dx$. Two surprises: it can be
+  <b>negative</b>, and it's <b>not invariant</b> to how you parameterize $x$. Both come from the same place —
+  a density isn't a probability. For a Gaussian, $H = \tfrac12\ln(2\pi e\sigma^2)$ nats, which dips below zero once
+  $\sigma$ gets small enough that the peak exceeds 1.</p>
+
+  <div class="fig">
+    <div class="grid2">
+      <div><canvas id="cv_diffent"></canvas></div>
+      <div><canvas id="cv_diffent_h"></canvas></div>
+    </div>
+    <div class="ctrls">
+      <div class="ctrl">
+        <label>std dev σ <span class="v" id="v_sig">1.00</span></label>
+        <input id="sl_sig" type="range" min="0.08" max="3" step="0.01" value="1">
+      </div>
+      <div class="ctrl">
+        <label>bin width Δ <span class="v" id="v_del">0.20</span></label>
+        <input id="sl_del" type="range" min="0.02" max="1" step="0.01" value="0.2">
+      </div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><div class="lab">DIFFERENTIAL H (nats)</div><div class="num" id="ro_Hd" style="color:var(--blue)">1.42</div></div>
+      <div class="ro"><div class="lab">DISCRETE H (bins)</div><div class="num" id="ro_Hdisc" style="color:var(--yellow)">3.04</div></div>
+    </div>
+    <div class="figcap"><b>Left:</b> as you shrink $\sigma$ the Gaussian becomes a tall spike; the area under
+    $-p\ln p$ flips sign and $H$ goes negative (right plot crosses zero at $\sigma = 1/\sqrt{2\pi e}\approx0.242$).
+    <b>The bin trick:</b> a real (positive) discrete entropy of $\Delta$-wide bins is
+    $H_{\text{disc}}\approx H_{\text{diff}} - \ln\Delta$. Differential entropy is what's left after you subtract
+    off the resolution term $\ln\Delta$ — so its zero point is arbitrary, and it can be negative.</div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section id="maxent">
+  <h2><span class="num">6</span>The Gaussian is the most honest guess<span class="tag">max entropy</span></h2>
+  <p class="lead">§2.5.4: among <i>all</i> distributions with a given mean and variance, the <b>Gaussian has the highest
+  differential entropy</b>. "Highest entropy" = "fewest hidden assumptions." If all you know is a mean and a spread,
+  any non-Gaussian choice smuggles in extra structure you can't justify. This is the principled reason Gaussian
+  noise shows up in diffusion models and Gaussian inits in your networks.</p>
+
+  <div class="fig">
+    <div class="grid2">
+      <div><canvas id="cv_maxent"></canvas></div>
+      <div>
+        <canvas id="cv_maxent_bars"></canvas>
+      </div>
+    </div>
+    <div class="figcap">All four densities have <b>identical mean (0) and variance (1)</b> — same "size."
+    Yet their entropies differ, and the <span style="color:var(--blue)"><b>Gaussian</b></span> tops the bar chart.
+    The uniform and triangular are "too confined"; the Laplace is "too pinched." The Gaussian threads the needle:
+    the least-committal shape consistent with the constraints.</div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section id="kl">
+  <h2><span class="num">7</span>KL divergence: the cost of believing the wrong model<span class="tag">CRITICAL</span></h2>
+  <p class="lead">$\text{KL}(p\,\|\,q) = \int p(x)\ln\frac{p(x)}{q(x)}\,dx$ measures how far an approximation $q$ is from the
+  truth $p$. Operationally: if reality is $p$ but you build your code/model assuming $q$, KL is the
+  <b>extra bits you waste per sample</b>. It's always $\ge 0$, zero only when $q=p$ — but it is
+  <b>not symmetric</b>.</p>
+
+  <div class="fig">
+    <canvas id="cv_kl"></canvas>
+    <div class="ctrls">
+      <div class="ctrl">
+        <label>q mean μ <span class="v" id="v_klmu">1.20</span></label>
+        <input id="sl_klmu" type="range" min="-3" max="3" step="0.01" value="1.2">
+      </div>
+      <div class="ctrl">
+        <label>q std σ <span class="v" id="v_klsig">1.60</span></label>
+        <input id="sl_klsig" type="range" min="0.3" max="3" step="0.01" value="1.6">
+      </div>
+      <button id="b_klmatch" class="accent">▶ Snap q onto p</button>
+    </div>
+    <div class="readouts">
+      <div class="ro"><div class="lab"><span class="dot" style="background:var(--yellow)"></span>truth p</div><div class="num mono" style="font-size:14px;color:var(--muted)">N(0, 1)</div></div>
+      <div class="ro"><div class="lab"><span class="dot" style="background:var(--red)"></span>KL(p‖q) bits</div><div class="num" id="ro_klf" style="color:var(--red)">0.42</div></div>
+      <div class="ro"><div class="lab">KL(q‖p) bits</div><div class="num" id="ro_klr" style="color:var(--orange)">0.55</div></div>
+    </div>
+    <div class="figcap"><b>The shaded curve is the integrand</b> $p\ln(p/q)$. Where $p>q$ it's
+    <span style="color:var(--red)">positive</span> (you under-predicted a likely region — costly); where $p<q$ it's
+    <span style="color:var(--blue)">negative</span> (you wasted budget on an unlikely region). The integral nets out
+    to something $\ge 0$. Snap $q$ onto $p$ and both KLs vanish.</div>
+  </div>
+
+  <div class="callout aha">
+    <div class="t">Why minimizing KL = maximum likelihood</div>
+    Cross-entropy splits exactly: $\;H(p,q) = \underbrace{H(p)}_{\text{irreducible}} + \underbrace{\text{KL}(p\,\|\,q)}_{\text{your error}}$.
+    The first term is fixed by reality. So <b>minimizing cross-entropy loss over your model $q_\theta$ is precisely
+    minimizing $\text{KL}(p_{\text{data}}\|q_\theta)$</b> — which is maximum likelihood. This single line is why
+    LLM training works.
+  </div>
+
+  <div class="fig">
+    <canvas id="cv_xent"></canvas>
+    <div class="figcap"><b>The stacked bar tracks the figure above.</b> The blue floor $H(p)$ never moves — it's the
+    true entropy of the data, the best any model could do. The red stack on top is your KL error. Training pushes
+    the red to zero; it can never dig below the blue floor.</div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section id="modes">
+  <h2><span class="num">8</span>Forward vs reverse KL: cover everything, or commit?<span class="tag">RLHF · VI · distillation</span></h2>
+  <p class="lead">KL's asymmetry is not a footnote — it decides the behavior of half of modern ML. Fit a single Gaussian
+  $q$ to a stubbornly <b>bimodal</b> truth $p$ and the two directions disagree completely:</p>
+  <ul>
+    <li><b>Forward, $\text{KL}(p\,\|\,q)$ — "mean-seeking / mode-covering".</b> $p$ multiplies the integrand, so $q$ is
+    <b>punished wherever $p$ has mass but $q$ doesn't</b>. To avoid infinite penalty $q$ stretches to <b>blanket both modes</b>,
+    even piling mass in the empty valley between them. This is the MLE / distillation direction.</li>
+    <li><b>Reverse, $\text{KL}(q\,\|\,p)$ — "mode-seeking".</b> Now $q$ multiplies the integrand and is punished for
+    putting mass where $p$ is near zero. The safe move is to <b>collapse onto a single mode</b> and ignore the rest.
+    This is the variational-inference direction, and the spirit of RLHF's KL leash that keeps a policy inside the reference model's support.</li>
+  </ul>
+
+  <div class="fig">
+    <canvas id="cv_modes"></canvas>
+    <div class="ctrls">
+      <button id="b_fwd" class="accent">▶ Minimize forward KL(p‖q) — cover</button>
+      <button id="b_rev" class="warm">▶ Minimize reverse KL(q‖p) — commit</button>
+      <div class="ctrl">
+        <label>q mean μ <span class="v" id="v_mmu">0.00</span></label>
+        <input id="sl_mmu" type="range" min="-4" max="4" step="0.01" value="0">
+      </div>
+      <div class="ctrl">
+        <label>q std σ <span class="v" id="v_msig">1.80</span></label>
+        <input id="sl_msig" type="range" min="0.25" max="3.2" step="0.01" value="1.8">
+      </div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><div class="lab"><span class="dot" style="background:var(--red)"></span>KL(p‖q) forward</div><div class="num" id="ro_mf" style="color:var(--red)">0.30</div></div>
+      <div class="ro"><div class="lab"><span class="dot" style="background:var(--orange)"></span>KL(q‖p) reverse</div><div class="num" id="ro_mr" style="color:var(--orange)">0.45</div></div>
+    </div>
+    <div class="figcap">Hit the two buttons back-to-back to watch the <span style="color:var(--teal)">teal $q$</span> snap between
+    the broad <b>covering</b> fit and the narrow <b>committing</b> fit on the dominant mode. Same $p$, same family for $q$,
+    opposite personalities — purely from which way you write the KL.</div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section id="llm">
+  <h2><span class="num">9</span>KL in the wild: four LLM algorithms<span class="tag">deep dive</span></h2>
+  <p class="lead">Everything below is the <i>same</i> KL divergence you just dragged around — wearing four different
+  costumes. Each tab walks the full computation step by step with a live toy you can poke. <b>Colors are shared
+  between the equations and the plots</b>: a symbol's color is its picture's color.</p>
+
+  <div class="deepdive">
+    <div class="tabs" role="tablist">
+      <div class="tab active" data-group="ll" data-tab="rlhf"><span class="accent-dot" style="background:#84d98a"></span>RLHF / PPO</div>
+      <div class="tab" data-group="ll" data-tab="dpo"><span class="accent-dot" style="background:#c08cf0"></span>DPO</div>
+      <div class="tab" data-group="ll" data-tab="distill"><span class="accent-dot" style="background:#5ec8e8"></span>Distillation</div>
+      <div class="tab" data-group="ll" data-tab="vae"><span class="accent-dot" style="background:#54d6bd"></span>VAE</div>
+    </div>
+
+    <!-- ================= RLHF / PPO ================= -->
+    <div class="tabpanel active" data-group="ll" data-tab="rlhf">
+      <div class="lesson">
+        <div class="ltag cc-green">Lesson 1 / 2 · the objective</div>
+        <h4>The KL-regularized objective &amp; its closed-form optimum</h4>
+        <p>Maximizing reward outright lets the policy chase reward-model artifacts and forget how to speak. RLHF
+        instead maximizes reward <i>while staying close to the frozen reference</i> via a
+        <span class="cc-purple">reverse-KL leash</span> — exactly the mode-seeking direction from the lesson above:</p>
+        <div class="eqbox">$$\max_{\pi}\; \mathbb{E}_{y\sim\pi}\big[\textcolor{#f6c945}{r(y)}\big]\;-\;\textcolor{#c08cf0}{\beta}\,\mathrm{KL}\!\big(\textcolor{#54d6bd}{\pi}\,\Vert\,\textcolor{#5ec8e8}{\pi_{\text{ref}}}\big)$$</div>
+        <p>Setting the functional derivative to zero and normalizing gives a closed-form optimum:</p>
+        <div class="eqbox">$$\textcolor{#54d6bd}{\pi^\star(y)}=\frac{1}{Z}\,\textcolor{#5ec8e8}{\pi_{\text{ref}}(y)}\,\exp\!\Big(\tfrac{\textcolor{#f6c945}{r(y)}}{\textcolor{#c08cf0}{\beta}}\Big),\qquad Z=\sum_y \textcolor{#5ec8e8}{\pi_{\text{ref}}(y)}\,e^{r(y)/\beta}$$</div>
+        <ol class="steps">
+          <li>A reward model scores each candidate response: <span class="cc-gold">$r(y)$</span> (gold numbers on the chart).</li>
+          <li>The leash multiplies the reference by an <b>exponential tilt</b> $e^{r/\beta}$ — good responses boosted, bad ones suppressed.</li>
+          <li><span class="cc-purple">$\beta$</span> sets how hard you pull: <b>large $\beta$</b> → hug <span class="cc-blue">$\pi_{\text{ref}}$</span>; <b>small $\beta$</b> → collapse onto the single highest-reward response (reward-hacking territory).</li>
+        </ol>
+        <div class="fig">
+          <canvas id="cv_rlhf_pol"></canvas>
+          <div class="legend">
+            <span><i style="background:#5ec8e8"></i> reference $\pi_{\text{ref}}$</span>
+            <span><i style="background:#54d6bd"></i> aligned $\pi^\star$</span>
+            <span><i style="background:#f6c945"></i> reward $r(y)$</span>
+          </div>
+          <div class="ctrls">
+            <div class="ctrl"><label>KL weight β <span class="v" id="v_brlhf">1.00</span></label>
+              <input id="sl_brlhf" type="range" min="0.1" max="6" step="0.01" value="1"></div>
+            <button id="b_rlhf_lo">β → 0 (greedy)</button>
+            <button id="b_rlhf_hi">β large (stay put)</button>
+          </div>
+          <div class="readouts">
+            <div class="ro"><div class="lab">KL(π★‖π_ref) nats</div><div class="num" id="ro_rlhf_kl" style="color:#f49d52">—</div></div>
+            <div class="ro"><div class="lab">E[reward]</div><div class="num" id="ro_rlhf_er" style="color:#f6c945">—</div></div>
+            <div class="ro"><div class="lab">objective E[r]−βKL</div><div class="num" id="ro_rlhf_obj" style="color:#84d98a">—</div></div>
+          </div>
+          <div class="figcap">Drag <span class="cc-purple">β</span> and watch the <span class="cc-teal">aligned policy</span>
+          morph between the <span class="cc-blue">reference</span> (β large) and a spike on the top-reward response
+          (β→0). The <span class="cc-orange">KL</span> readout is the length of leash you're paying for.</div>
+        </div>
+      </div>
+
+      <div class="lesson">
+        <div class="ltag cc-green">Lesson 2 / 2 · the optimizer</div>
+        <h4>How PPO actually climbs toward $\pi^\star$</h4>
+        <p>We never have $\pi^\star$ in closed form — $Z$ sums over <i>all</i> sequences. PPO approaches it from
+        sampled rollouts with two pieces.</p>
+        <p><b>(a) Per-token reward shaping.</b> The KL leash is folded into the reward at every token:</p>
+        <div class="eqbox">$$\tilde r_t = \underbrace{r_{\text{RM}}\,[t{=}T]}_{\text{terminal RM score}} \;-\; \textcolor{#c08cf0}{\beta}\,\big(\log\textcolor{#54d6bd}{\pi_\theta(a_t|s_t)}-\log\textcolor{#5ec8e8}{\pi_{\text{ref}}(a_t|s_t)}\big)$$</div>
+        <p><b>(b) The clipped surrogate.</b> With <span class="cc-purple">ratio</span> $\textcolor{#c08cf0}{\rho_t}=\dfrac{\pi_\theta(a_t|s_t)}{\pi_{\theta_{\text{old}}}(a_t|s_t)}$ and <span class="cc-gold">advantage</span> $\hat A_t$ (from GAE on $\tilde r$):</p>
+        <div class="eqbox">$$L^{\text{CLIP}}=\mathbb{E}\Big[\min\big(\textcolor{#c08cf0}{\rho_t}\,\hat A_t,\;\operatorname{clip}(\textcolor{#c08cf0}{\rho_t},1-\epsilon,1+\epsilon)\,\hat A_t\big)\Big]$$</div>
+        <ol class="steps">
+          <li>If advantage <span class="cc-green">$\hat A&gt;0$</span> (better than expected), raising $\rho$ helps — but the <span class="cc-gold">clip at $1+\epsilon$</span> caps the gain so one step can't move the policy too far.</li>
+          <li>If advantage <span class="cc-red">$\hat A&lt;0$</span> (worse), lowering $\rho$ helps — clipped at $1-\epsilon$.</li>
+          <li>The flat clipped regions have <b>zero gradient</b> → the trust region that keeps updates honest. That's PPO's whole trick.</li>
+        </ol>
+        <div class="fig">
+          <canvas id="cv_ppo_clip"></canvas>
+          <div class="ctrls">
+            <div class="ctrl"><label>advantage Â <span class="v" id="v_ppoA">+1.0</span></label>
+              <input id="sl_ppoA" type="range" min="-2" max="2" step="0.05" value="1"></div>
+            <div class="ctrl"><label>clip ε <span class="v" id="v_ppoE">0.20</span></label>
+              <input id="sl_ppoE" type="range" min="0.05" max="0.5" step="0.01" value="0.2"></div>
+          </div>
+          <div class="figcap">The <b>solid</b> curve is the clipped surrogate vs the ratio <span class="cc-purple">ρ</span>
+          (green for $\hat A&gt;0$, red for $\hat A&lt;0$); the <span class="cc-grey">grey dashed</span> line is the unclipped
+          $\rho\hat A$. Outside $[1-\epsilon,1+\epsilon]$ (gold lines) the surrogate goes <b>flat</b> — no incentive to keep moving.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= DPO ================= -->
+    <div class="tabpanel" data-group="ll" data-tab="dpo">
+      <div class="lesson">
+        <div class="ltag cc-purple">Lesson 1 / 2 · the reparameterization</div>
+        <h4>Turning the RL optimum into a reward</h4>
+        <p>DPO's insight: the RLHF optimum above can be <b>algebraically inverted</b>. Take logs of
+        <span class="cc-teal">$\pi^\star$</span> and solve for the reward:</p>
+        <div class="eqbox">$$\textcolor{#f6c945}{r(y)} = \textcolor{#c08cf0}{\beta}\,\log\frac{\textcolor{#54d6bd}{\pi^\star(y)}}{\textcolor{#5ec8e8}{\pi_{\text{ref}}(y)}} \;+\; \textcolor{#8a8a9c}{\beta\log Z}$$</div>
+        <p>So <b>any policy implicitly defines a reward</b>: its log-ratio to the reference, scaled by β, up to the
+        per-prompt constant <span class="cc-grey">$\beta\log Z$</span>. The chart shows the true reward (gold) and the
+        <span class="cc-teal">recovered reward</span> $\hat r(y)=\beta\log(\pi^\star/\pi_{\text{ref}})$ — identical
+        shape, shifted down by exactly <span class="cc-grey">$\beta\log Z$</span>.</p>
+        <div class="fig">
+          <canvas id="cv_dpo_reward"></canvas>
+          <div class="legend">
+            <span><i style="background:#f6c945"></i> true reward $r$</span>
+            <span><i style="background:#54d6bd"></i> implicit reward $\hat r=\beta\log\frac{\pi}{\pi_{\text{ref}}}$</span>
+          </div>
+          <div class="ctrls"><div class="ctrl"><label>β <span class="v" id="v_bdpo">1.00</span></label>
+            <input id="sl_bdpo" type="range" min="0.2" max="4" step="0.01" value="1"></div></div>
+          <div class="readouts"><div class="ro"><div class="lab">the offset β·logZ</div><div class="num mono" id="ro_dpo_z" style="color:#8a8a9c;font-size:17px">—</div></div></div>
+          <div class="figcap">The two reward profiles are <b>parallel</b> — they differ only by the constant
+          <span class="cc-grey">$\beta\log Z$</span>. That constant is the villain DPO is about to make disappear.</div>
+        </div>
+      </div>
+
+      <div class="lesson">
+        <div class="ltag cc-purple">Lesson 2 / 2 · the cancellation</div>
+        <h4>Bradley–Terry + the vanishing $Z$ → the DPO loss</h4>
+        <p>Preferences use <b>Bradley–Terry</b>: the chance the winner <span class="cc-green">$y_w$</span> beats the
+        loser <span class="cc-red">$y_l$</span> is a sigmoid of their reward gap, $P(y_w\succ y_l)=\sigma(r_w-r_l)$.
+        Substitute the implicit reward — and the ugly <span class="cc-grey">$\beta\log Z$</span> <b>cancels</b>,
+        because it's identical for both responses to the same prompt:</p>
+        <div class="eqbox">$$r_w-r_l=\textcolor{#c08cf0}{\beta}\Big(\underbrace{\log\tfrac{\pi_\theta(y_w)}{\pi_{\text{ref}}(y_w)}}_{\textcolor{#84d98a}{s_w}}-\underbrace{\log\tfrac{\pi_\theta(y_l)}{\pi_{\text{ref}}(y_l)}}_{\textcolor{#fc6a5d}{s_l}}\Big)+\textcolor{#8a8a9c}{\cancel{\beta\log Z}}$$</div>
+        <p>leaving a pure classification loss — <b>no reward model, no RL loop</b>:</p>
+        <div class="eqbox">$$\mathcal{L}_{\text{DPO}}=-\log\sigma\!\Big(\textcolor{#c08cf0}{\beta}\big(\textcolor{#84d98a}{s_w}-\textcolor{#fc6a5d}{s_l}\big)\Big)$$</div>
+        <ol class="steps">
+          <li>Compute each response's log-ratio against the reference: <span class="cc-green">$s_w$</span>, <span class="cc-red">$s_l$</span>.</li>
+          <li>Form the <span class="cc-purple">margin</span> $m=\beta(s_w-s_l)$ — how much more the model prefers the winner than the reference did.</li>
+          <li>Loss $=-\log\sigma(m)$. Its gradient is weighted by <span class="cc-orange">$\sigma(-m)$</span> = "how wrong we still are" — confident-correct pairs barely contribute.</li>
+        </ol>
+        <div class="fig">
+          <canvas id="cv_dpo_loss"></canvas>
+          <div class="ctrls">
+            <div class="ctrl"><label><span class="cc-green">$s_w$</span> winner log-ratio <span class="v" id="v_sw">0.50</span></label>
+              <input id="sl_sw" type="range" min="-3" max="3" step="0.02" value="0.5"></div>
+            <div class="ctrl"><label><span class="cc-red">$s_l$</span> loser log-ratio <span class="v" id="v_sl">-0.50</span></label>
+              <input id="sl_sl" type="range" min="-3" max="3" step="0.02" value="-0.5"></div>
+            <div class="ctrl"><label>β <span class="v" id="v_bdpo2">1.00</span></label>
+              <input id="sl_bdpo2" type="range" min="0.2" max="4" step="0.01" value="1"></div>
+          </div>
+          <div class="readouts">
+            <div class="ro"><div class="lab">margin m</div><div class="num" id="ro_dpo_m" style="color:#c08cf0">—</div></div>
+            <div class="ro"><div class="lab">P(y_w ≻ y_l)</div><div class="num" id="ro_dpo_p" style="color:#84d98a">—</div></div>
+            <div class="ro"><div class="lab">loss −logσ(m)</div><div class="num" id="ro_dpo_loss" style="color:#fc6a5d">—</div></div>
+            <div class="ro"><div class="lab">grad weight σ(−m)</div><div class="num" id="ro_dpo_g" style="color:#f49d52">—</div></div>
+          </div>
+          <div class="figcap">Push the <span class="cc-green">winner</span> up and the <span class="cc-red">loser</span>
+          down: the <span class="cc-purple">margin</span> grows, the dot slides up the sigmoid toward $P=1$, and the
+          loss flattens to 0. When the model is already confidently right, the <span class="cc-orange">gradient weight</span>
+          $\sigma(-m)$ vanishes — DPO automatically stops pushing.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= DISTILLATION ================= -->
+    <div class="tabpanel" data-group="ll" data-tab="distill">
+      <div class="lesson">
+        <div class="ltag cc-blue">Lesson 1 / 2 · soft targets</div>
+        <h4>Temperature &amp; "dark knowledge"</h4>
+        <p>A trained teacher's top class is usually obvious; the <i>value</i> is in the <b>relative</b> probabilities
+        of the runner-ups ("a 7 looks a bit like a 1, never like a 9"). A cold softmax buries this. Distillation
+        <b>heats up</b> the softmax with temperature <span class="cc-purple">$T$</span>:</p>
+        <div class="eqbox">$$\textcolor{#5ec8e8}{p^{\,T}_i}=\frac{\exp(z_i/\textcolor{#c08cf0}{T})}{\sum_j\exp(z_j/\textcolor{#c08cf0}{T})}$$</div>
+        <ol class="steps">
+          <li>At <span class="cc-purple">$T=1$</span> the distribution is sharp — one tall bar.</li>
+          <li>Raising <span class="cc-purple">$T$</span> flattens it, lifting the small "dark-knowledge" bars into view.</li>
+          <li>As $T\to\infty$ it approaches uniform (all structure gone). The useful range is intermediate.</li>
+        </ol>
+        <div class="fig">
+          <canvas id="cv_dist_temp"></canvas>
+          <div class="ctrls"><div class="ctrl"><label>temperature T <span class="v" id="v_distT">2.00</span></label>
+            <input id="sl_distT" type="range" min="0.4" max="8" step="0.01" value="2"></div></div>
+          <div class="readouts"><div class="ro"><div class="lab">teacher entropy (bits)</div><div class="num" id="ro_distH" style="color:#c08cf0">—</div></div></div>
+          <div class="figcap">Fixed teacher <span class="cc-blue">logits</span>; only <span class="cc-purple">T</span> moves.
+          Watch the tiny non-top bars rise — that's the similarity structure the student learns from, which a one-hot
+          label would discard.</div>
+        </div>
+      </div>
+
+      <div class="lesson">
+        <div class="ltag cc-blue">Lesson 2 / 2 · the objective</div>
+        <h4>Distillation is a forward KL</h4>
+        <p>The student <span class="cc-teal">$q_S$</span> is trained to match the softened teacher
+        <span class="cc-blue">$p^T$</span> by minimizing the <b>forward</b> KL — the
+        <span class="cc-blue">mean-seeking</span> direction from the lesson above, so the student is pressured to put
+        mass on <i>every</i> class the teacher likes:</p>
+        <div class="eqbox">$$\mathcal{L}_{\text{KD}}=\textcolor{#c08cf0}{T^2}\cdot\mathrm{KL}\!\big(\textcolor{#5ec8e8}{p^{\,T}}\,\Vert\,\textcolor{#54d6bd}{q^{\,T}_S}\big)$$</div>
+        <ol class="steps">
+          <li>Soften both teacher and student logits by the same <span class="cc-purple">$T$</span>.</li>
+          <li>Minimize forward KL → student covers all teacher modes (reverse KL would let it collapse onto the top class).</li>
+          <li>The <span class="cc-purple">$T^2$</span> prefactor undoes the $1/T^2$ shrinkage that softening puts on the gradients, keeping this term comparable to the hard-label loss it's mixed with.</li>
+        </ol>
+        <div class="fig">
+          <canvas id="cv_dist_kl"></canvas>
+          <div class="legend">
+            <span><i style="background:#5ec8e8"></i> teacher $p^T$</span>
+            <span><i style="background:#54d6bd"></i> student $q_S$</span>
+          </div>
+          <div class="ctrls"><div class="ctrl"><label>student match <span class="v" id="v_dmatch">0.40</span></label>
+            <input id="sl_dmatch" type="range" min="0" max="1" step="0.01" value="0.4"></div></div>
+          <div class="readouts">
+            <div class="ro"><div class="lab">forward KL(p‖q) bits</div><div class="num" id="ro_dkl" style="color:#f49d52">—</div></div>
+            <div class="ro"><div class="lab">reverse KL(q‖p) bits</div><div class="num" id="ro_dklr" style="color:#8a8a9c">—</div></div>
+          </div>
+          <div class="figcap">Slide the student from uniform toward the teacher: both KLs fall to 0 at a perfect match.
+          In a real, capacity-limited student the two directions disagree — forward (used here) makes it
+          <b>hedge across all the teacher's classes</b> rather than bet on one.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= VAE ================= -->
+    <div class="tabpanel" data-group="ll" data-tab="vae">
+      <div class="lesson">
+        <div class="ltag cc-teal">Lesson 1 / 2 · the ELBO</div>
+        <h4>ELBO = reconstruction − KL-to-prior</h4>
+        <p>A VAE can't compute $\log p(x)$, so it maximizes a lower bound (the <b>ELBO</b>):</p>
+        <div class="eqbox">$$\log p(x)\;\ge\;\underbrace{\mathbb{E}_{\textcolor{#54d6bd}{q(z|x)}}[\log p(x|z)]}_{\text{reconstruction}}\;-\;\underbrace{\mathrm{KL}\!\big(\textcolor{#54d6bd}{q(z|x)}\,\Vert\,\textcolor{#5ec8e8}{p(z)}\big)}_{\text{regularizer}}$$</div>
+        <p>With encoder <span class="cc-teal">$q(z|x)=\mathcal N(\mu,\sigma^2)$</span> and prior
+        <span class="cc-blue">$p(z)=\mathcal N(0,1)$</span>, the KL has a closed form you can read term by term:</p>
+        <div class="eqbox">$$\mathrm{KL}=\tfrac12\big(\;\underbrace{\textcolor{#c08cf0}{\mu^2}}_{\text{pulls }\mu\to0}\;+\;\underbrace{\textcolor{#f49d52}{\sigma^2-1-\log\sigma^2}}_{\text{pulls }\sigma\to1}\;\big)$$</div>
+        <div class="fig">
+          <canvas id="cv_vae_kl"></canvas>
+          <div class="legend">
+            <span><i style="background:#54d6bd"></i> posterior $q(z|x)$</span>
+            <span><i style="background:#5ec8e8"></i> prior $p(z)=\mathcal N(0,1)$</span>
+          </div>
+          <div class="ctrls">
+            <div class="ctrl"><label>μ posterior mean <span class="v" id="v_vmu">1.00</span></label>
+              <input id="sl_vmu" type="range" min="-3" max="3" step="0.01" value="1"></div>
+            <div class="ctrl"><label>σ posterior std <span class="v" id="v_vsig">0.60</span></label>
+              <input id="sl_vsig" type="range" min="0.1" max="3" step="0.01" value="0.6"></div>
+          </div>
+          <div class="readouts">
+            <div class="ro"><div class="lab">KL total (nats)</div><div class="num" id="ro_vkl" style="color:#f49d52">—</div></div>
+            <div class="ro"><div class="lab">μ-term ½μ²</div><div class="num" id="ro_vmu" style="color:#c08cf0">—</div></div>
+            <div class="ro"><div class="lab">σ-term</div><div class="num" id="ro_vsigt" style="color:#f49d52">—</div></div>
+          </div>
+          <div class="figcap">KL is <b>zero only when</b> <span class="cc-teal">$q$</span> equals the
+          <span class="cc-blue">prior</span> ($\mu{=}0,\sigma{=}1$). Move either slider and the matching term lights up.
+          This is the force that keeps the latent space smooth and samplable.</div>
+        </div>
+      </div>
+
+      <div class="lesson">
+        <div class="ltag cc-teal">Lesson 2 / 2 · the trick &amp; the trap</div>
+        <h4>Reparameterization &amp; posterior collapse</h4>
+        <p>You can't backprop through "sample $z\sim q$". The <b>reparameterization trick</b> rewrites the sample as a
+        deterministic, differentiable function of fixed noise:</p>
+        <div class="eqbox">$$z=\textcolor{#c08cf0}{\mu}+\textcolor{#5ec8e8}{\sigma}\odot\epsilon,\qquad \epsilon\sim\mathcal N(0,1)$$</div>
+        <p>Gradients now flow through <span class="cc-purple">μ</span> and <span class="cc-blue">σ</span>; the randomness
+        sits in $\epsilon$, off the gradient path. β-VAE weights the regularizer by <span class="cc-purple">β</span> —
+        and there's a trap: push β too hard and the encoder finds it cheapest to just <b>become the prior</b>
+        (<span class="cc-red">posterior collapse</span>), so the latent carries no information.</p>
+        <ol class="steps">
+          <li>For a toy datapoint that "wants" the code $\mu^\star{=}2$, balancing reconstruction against βKL gives
+          $\textcolor{#54d6bd}{\mu^\star}=\frac{2}{1+\beta}$, $\textcolor{#5ec8e8}{\sigma^{\star2}}=\frac{\beta}{1+\beta}$.</li>
+          <li>Small β → $\mu^\star\to2,\ \sigma^\star\to0$: a crisp, informative code.</li>
+          <li>Large β → $\mu^\star\to0,\ \sigma^\star\to1$: the posterior <b>collapses</b> onto the prior and the decoder ignores $z$.</li>
+        </ol>
+        <div class="fig">
+          <div class="grid2">
+            <div><canvas id="cv_vae_reparam"></canvas></div>
+            <div><canvas id="cv_vae_beta"></canvas></div>
+          </div>
+          <div class="ctrls"><div class="ctrl"><label>β (KL weight) <span class="v" id="v_vbeta">1.00</span></label>
+            <input id="sl_vbeta" type="range" min="0.05" max="8" step="0.01" value="1"></div></div>
+          <div class="readouts">
+            <div class="ro"><div class="lab">optimal μ★</div><div class="num" id="ro_vomu" style="color:#54d6bd">—</div></div>
+            <div class="ro"><div class="lab">optimal σ★</div><div class="num" id="ro_vosig" style="color:#5ec8e8">—</div></div>
+            <div class="ro"><div class="lab">KL at optimum</div><div class="num" id="ro_voklc" style="color:#f49d52">—</div></div>
+          </div>
+          <div class="figcap"><b>Left:</b> the reparameterization map — fixed <span class="cc-grey">noise $\epsilon$</span>
+          (top row) is shifted by <span class="cc-purple">μ★</span> and scaled by <span class="cc-blue">σ★</span> into
+          the latent samples <span class="cc-teal">$z$</span> (bottom row). <b>Right:</b> as <span class="cc-purple">β</span>
+          grows the optimal code slides toward the prior (<span class="cc-teal">μ★</span>→0) — crank it up and the latent
+          goes <span class="cc-red">silent</span>.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section id="mi">
+  <h2><span class="num">10</span>Mutual information: how much one variable tells you about another</h2>
+  <p class="lead">Conditional entropy $H[Y|X]$ is the uncertainty left in $Y$ <i>after</i> you see $X$, and the
+  <b>chain rule</b> stacks cleanly: $H[X,Y] = H[X] + H[Y|X]$. <b>Mutual information</b> is what observing $X$
+  removes from $Y$ (or vice-versa): $I[X,Y] = H[Y] - H[Y|X] = \text{KL}\big(p(x,y)\,\|\,p(x)p(y)\big)$ — literally
+  the KL distance from "$X,Y$ independent." It's symmetric, $\ge 0$, and zero iff independent.</p>
+
+  <p class="small">Below: a <b>noisy binary channel</b>. $X\in\{0,1\}$ with $P(X{=}1)=a$, and $Y$ is $X$ flipped with
+  probability $f$. Slide $f$ from 0 (perfect copy) toward 0.5 (pure noise) and watch information drain away.</p>
+
+  <div class="fig">
+    <div class="grid2">
+      <div><canvas id="cv_venn"></canvas></div>
+      <div><canvas id="cv_chain"></canvas></div>
+    </div>
+    <div class="ctrls">
+      <div class="ctrl">
+        <label>source bias P(X=1) = a <span class="v" id="v_a">0.50</span></label>
+        <input id="sl_a" type="range" min="0.02" max="0.98" step="0.01" value="0.5">
+      </div>
+      <div class="ctrl">
+        <label>flip prob f <span class="v" id="v_f">0.10</span></label>
+        <input id="sl_f" type="range" min="0" max="0.5" step="0.005" value="0.1">
+      </div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><div class="lab"><span class="dot" style="background:var(--blue)"></span>H[X]</div><div class="num" id="ro_Hx" style="color:var(--blue)">1.00</div></div>
+      <div class="ro"><div class="lab"><span class="dot" style="background:var(--yellow)"></span>H[Y]</div><div class="num" id="ro_Hy" style="color:var(--yellow)">1.00</div></div>
+      <div class="ro"><div class="lab"><span class="dot" style="background:var(--purple)"></span>I[X,Y]</div><div class="num" id="ro_I" style="color:var(--purple)">0.53</div></div>
+      <div class="ro"><div class="lab">H[Y|X]</div><div class="num" id="ro_Hygx" style="color:var(--muted)">0.47</div></div>
+    </div>
+    <div class="figcap"><b>Left — the information Venn diagram, drawn to scale.</b> The two circles' areas are
+    $H[X]$ and $H[Y]$; their <b>overlap is exactly $I[X,Y]$</b>, computed and area-matched on the fly.
+    At $f=0.5$ the circles pull apart (independent, $I=0$); at $f=0$ they fuse ($Y$ determines $X$, $I=H[X]$).
+    <b>Right — the chain rule</b> $H[X,Y]=H[X]+H[Y|X]$ as a literal stack of bars.</div>
+  </div>
+
+  <h3>The continuous cousin: correlated Gaussians</h3>
+  <div class="fig">
+    <div class="grid2">
+      <div><canvas id="cv_scatter"></canvas></div>
+      <div>
+        <p style="margin-top:0">For a bivariate Gaussian, mutual information has a clean closed form,
+        $I = -\tfrac12\log_2(1-\rho^2)$ bits. At $\rho=0$ the cloud is round and $X$ says nothing about $Y$.
+        As $|\rho|\to1$ the cloud collapses to a line and $I\to\infty$ — knowing $X$ pins down $Y$.
+        This is the quantity InfoNCE / CLIP push <i>up</i> between paired views, and the information
+        bottleneck pushes <i>down</i> between a representation and its input.</p>
+        <div class="ctrls">
+          <div class="ctrl">
+            <label>correlation ρ <span class="v" id="v_rho">0.60</span></label>
+            <input id="sl_rho" type="range" min="-0.97" max="0.97" step="0.01" value="0.6">
+          </div>
+        </div>
+        <div class="readouts">
+          <div class="ro"><div class="lab">I[X,Y] (bits)</div><div class="num" id="ro_Irho" style="color:var(--purple)">0.32</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <div class="t">Where this lands in your notes</div>
+    KL (§2.5.5) powers RLHF/PPO's reference leash, DPO's closed form, distillation direction, and the VAE ELBO.
+    Entropy (§2.5.1) is perplexity, the temperature knob, and PPO's exploration bonus. Mutual information (§2.5.7)
+    is contrastive learning, CLIP alignment, probing, and the information bottleneck. The intuitions you just dragged
+    around are the same ones, only renamed.
+  </div>
+
+  <div class="footer">DLFC §2.5 · interactive companion · drag everything · best viewed wide</div>
+</section>
+
+</main>
+
+<script>
+"use strict";
+/* ====================== palette + helpers ====================== */
+const C = {bg:'#0c0c12',panel:'#15151f',grid:'#23233a',axis:'#3a3a52',
+  ink:'#e7e7f0',muted:'#9a9ab0',blue:'#5ec8e8',yellow:'#f6c945',red:'#fc6a5d',
+  green:'#84d98a',purple:'#c08cf0',teal:'#54d6bd',orange:'#f49d52'};
+const LN2 = Math.LN2;
+const log2 = x => Math.log(x)/LN2;
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const fmt = (x,d=2)=> (Math.abs(x)<1e-9?0:x).toFixed(d);
+function Hb(p){ if(p<=0||p>=1) return 0; return -p*log2(p)-(1-p)*log2(1-p); }
+function gauss(x,mu,s){ return Math.exp(-(x-mu)*(x-mu)/(2*s*s))/(s*Math.sqrt(2*Math.PI)); }
+function lgamma(x){
+  const c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,
+    -176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+  if(x<0.5) return Math.log(Math.PI/Math.sin(Math.PI*x))-lgamma(1-x);
+  x-=1; let a=c[0]; const t=x+7.5;
+  for(let i=1;i<9;i++) a+=c[i]/(x+i);
+  return 0.5*Math.log(2*Math.PI)+(x+0.5)*Math.log(t)-t+Math.log(a);
+}
+const $ = id => document.getElementById(id);
+
+/* ---- lightweight cartesian plot helper ---- */
+class Plot{
+  constructor(canvas,W,H,xr,yr,pad){
+    this.c=canvas; this.W=W; this.H=H; this.xr=xr; this.yr=yr;
+    this.pad=Object.assign({l:48,r:16,t:16,b:34},pad||{});
+    const dpr=Math.min(window.devicePixelRatio||1,2); this.dpr=dpr;
+    canvas.width=W*dpr; canvas.height=H*dpr;
+    canvas.style.width='100%'; canvas.style.maxWidth=W+'px'; canvas.style.height='auto';
+    this.g=canvas.getContext('2d'); this.g.scale(dpr,dpr);
+  }
+  X(x){return this.pad.l+(x-this.xr[0])/(this.xr[1]-this.xr[0])*(this.W-this.pad.l-this.pad.r);}
+  Y(y){return this.H-this.pad.b-(y-this.yr[0])/(this.yr[1]-this.yr[0])*(this.H-this.pad.t-this.pad.b);}
+  iX(px){return this.xr[0]+(px-this.pad.l)/(this.W-this.pad.l-this.pad.r)*(this.xr[1]-this.xr[0]);}
+  iY(py){return this.yr[0]+(this.H-this.pad.b-py)/(this.H-this.pad.t-this.pad.b)*(this.yr[1]-this.yr[0]);}
+  clear(){this.g.clearRect(0,0,this.W,this.H);}
+  grid(xs,ys){const g=this.g;g.strokeStyle=C.grid;g.lineWidth=1;
+    if(xs)xs.forEach(x=>{g.beginPath();g.moveTo(this.X(x),this.Y(this.yr[0]));g.lineTo(this.X(x),this.Y(this.yr[1]));g.stroke();});
+    if(ys)ys.forEach(y=>{g.beginPath();g.moveTo(this.X(this.xr[0]),this.Y(y));g.lineTo(this.X(this.xr[1]),this.Y(y));g.stroke();});}
+  axes(opt){opt=opt||{};const g=this.g;g.strokeStyle=C.axis;g.lineWidth=1.4;
+    const y0=this.yr[0]<=0&&this.yr[1]>=0?0:this.yr[0];
+    g.beginPath();g.moveTo(this.X(this.xr[0]),this.Y(y0));g.lineTo(this.X(this.xr[1]),this.Y(y0));g.stroke();
+    g.beginPath();g.moveTo(this.X(0>=this.xr[0]&&0<=this.xr[1]?0:this.xr[0]),this.Y(this.yr[0]));
+      g.lineTo(this.X(0>=this.xr[0]&&0<=this.xr[1]?0:this.xr[0]),this.Y(this.yr[1]));g.stroke();
+    g.fillStyle=C.muted;g.font='12px ui-monospace,monospace';
+    if(opt.xticks)opt.xticks.forEach(t=>{g.textAlign='center';g.textBaseline='top';
+      g.fillText(t.l!==undefined?t.l:t,this.X(t.x!==undefined?t.x:t),this.Y(y0)+6);});
+    if(opt.yticks)opt.yticks.forEach(t=>{g.textAlign='right';g.textBaseline='middle';
+      g.fillText(t.l!==undefined?t.l:t,this.X(0>=this.xr[0]&&0<=this.xr[1]?0:this.xr[0])-7,this.Y(t.y!==undefined?t.y:t));});
+    if(opt.xlabel){g.fillStyle=C.muted;g.textAlign='right';g.textBaseline='bottom';g.font='12px Inter,sans-serif';
+      g.fillText(opt.xlabel,this.W-this.pad.r,this.H-2);}
+    if(opt.ylabel){g.save();g.translate(13,this.pad.t+4);g.rotate(-Math.PI/2);g.textAlign='right';g.textBaseline='top';
+      g.fillStyle=C.muted;g.font='12px Inter,sans-serif';g.fillText(opt.ylabel,0,0);g.restore();}
+  }
+  curve(fn,color,lw,glow){const g=this.g;g.save();g.beginPath();
+    const N=400;for(let i=0;i<=N;i++){const x=this.xr[0]+(this.xr[1]-this.xr[0])*i/N;const y=fn(x);
+      const px=this.X(x),py=this.Y(clamp(y,this.yr[0]-5,this.yr[1]+5));i?g.lineTo(px,py):g.moveTo(px,py);}
+    g.strokeStyle=color;g.lineWidth=lw||2.2;if(glow){g.shadowColor=color;g.shadowBlur=10;}g.stroke();g.restore();}
+  fillUnder(fn,color,base){const g=this.g;g.save();g.beginPath();const N=400;const b=base===undefined?this.yr[0]:base;
+    g.moveTo(this.X(this.xr[0]),this.Y(b));
+    for(let i=0;i<=N;i++){const x=this.xr[0]+(this.xr[1]-this.xr[0])*i/N;g.lineTo(this.X(x),this.Y(clamp(fn(x),this.yr[0],this.yr[1])));}
+    g.lineTo(this.X(this.xr[1]),this.Y(b));g.closePath();g.fillStyle=color;g.fill();g.restore();}
+  dot(x,y,r,color){const g=this.g;g.beginPath();g.arc(this.X(x),this.Y(y),r,0,7);g.fillStyle=color;
+    g.shadowColor=color;g.shadowBlur=12;g.fill();g.shadowBlur=0;}
+  label(x,y,txt,color,align){const g=this.g;g.fillStyle=color;g.font='13px Inter,sans-serif';
+    g.textAlign=align||'left';g.textBaseline='middle';g.fillText(txt,this.X(x),this.Y(y));}
+}
+function pointer(canvas,ev){const r=canvas.getBoundingClientRect();
+  const lx=canvas.width/(Math.min(window.devicePixelRatio||1,2));
+  const ly=canvas.height/(Math.min(window.devicePixelRatio||1,2));
+  return {x:(ev.clientX-r.left)/r.width*lx, y:(ev.clientY-r.top)/r.height*ly};}
+
+/* ====================== 1 · SURPRISE ====================== */
+(function(){
+  const P=new Plot($('cv_surprise'),460,330,[0,1],[0,10],{l:42,b:34});
+  const sl=$('sl_psurp');
+  function draw(){
+    const p=parseFloat(sl.value);
+    P.clear();
+    P.grid([0.25,0.5,0.75],[2,4,6,8]);
+    P.axes({xticks:[0,0.25,0.5,0.75,1],yticks:[0,2,4,6,8,10],xlabel:'probability p',ylabel:'surprise  −log₂ p  (bits)'});
+    P.fillUnder(x=>x<=0?10:clamp(-log2(x),0,10),'#fc6a5d20');
+    P.curve(x=>x<=0?20:-log2(x),C.red,2.6,true);
+    const h=-log2(p);
+    P.g.strokeStyle=C.muted;P.g.setLineDash([4,4]);P.g.lineWidth=1;
+    P.g.beginPath();P.g.moveTo(P.X(p),P.Y(0));P.g.lineTo(P.X(p),P.Y(clamp(h,0,10)));P.g.stroke();P.g.setLineDash([]);
+    P.dot(p,clamp(h,0,10),5,C.yellow);
+    $('v_psurp').textContent=fmt(p,3);
+    $('ro_surp').textContent=fmt(h,2);
+    $('ro_oneinn').textContent=(p>0?Math.round(1/p):'∞');
+  }
+  sl.addEventListener('input',draw);draw();
+
+  // additivity
+  const s1=$('sl_p1'),s2=$('sl_p2');
+  function add(){const p1=parseFloat(s1.value),p2=parseFloat(s2.value);
+    $('v_p1').textContent=fmt(p1,2);$('v_p2').textContent=fmt(p2,2);
+    const sum=-log2(p1)-log2(p2), joint=-log2(p1*p2);
+    $('ro_sum').textContent=fmt(sum,2);$('ro_joint').textContent=fmt(joint,2);
+    $('ro_pp').textContent=fmt(p1*p2,3);}
+  s1.addEventListener('input',add);s2.addEventListener('input',add);add();
+})();
+
+/* ====================== 2a · BINARY ENTROPY ====================== */
+(function(){
+  const P=new Plot($('cv_binent'),460,330,[0,1],[0,1.08],{l:42,b:34});
+  const sl=$('sl_bin');
+  function draw(){const p=parseFloat(sl.value);
+    P.clear();P.grid([0.25,0.5,0.75],[0.25,0.5,0.75,1]);
+    P.axes({xticks:[0,0.25,0.5,0.75,1],yticks:[{y:0,l:'0'},{y:0.5,l:'0.5'},{y:1,l:'1'}],
+      xlabel:'P(heads)',ylabel:'entropy H (bits)'});
+    P.fillUnder(x=>Hb(x),'#5ec8e820');
+    P.curve(x=>Hb(x),C.blue,2.6,true);
+    const h=Hb(p);
+    P.g.strokeStyle=C.muted;P.g.setLineDash([4,4]);P.g.beginPath();
+    P.g.moveTo(P.X(p),P.Y(0));P.g.lineTo(P.X(p),P.Y(h));P.g.stroke();P.g.setLineDash([]);
+    P.dot(p,h,5,C.yellow);
+    // coin glyph
+    const g=P.g, cx=P.X(0.5)+90, cy=P.Y(0.98), R=22;
+    g.save();g.translate(P.X(p),P.Y(h)+0);g.restore();
+    $('v_bin').textContent=fmt(p,3);$('ro_bin').textContent=fmt(h,3);
+  }
+  sl.addEventListener('input',draw);draw();
+})();
+
+/* ====================== 2b · ENTROPY BARS (draggable) ====================== */
+(function(){
+  const M=8;
+  let w=Array(M).fill(1);
+  const P=new Plot($('cv_entbars'),900,340,[0,1],[0,0.55],{l:48,b:34,t:18,r:16});
+  const cw=$('cv_entbars');
+  function probs(){const s=w.reduce((a,b)=>a+b,0);return w.map(v=>v/s);}
+  function draw(){
+    const p=probs();const H=p.reduce((a,q)=>a-(q>0?q*log2(q):0),0);
+    P.clear();
+    P.grid(null,[0.1,0.2,0.3,0.4,0.5]);
+    // ceiling
+    P.g.strokeStyle=C.faint||'#555';P.g.setLineDash([6,5]);P.g.strokeStyle='#6a6a8a';
+    const maxp=1/M;P.g.beginPath();P.g.moveTo(P.X(0),P.Y(maxp));P.g.lineTo(P.X(1),P.Y(maxp));P.g.stroke();P.g.setLineDash([]);
+    P.g.fillStyle=C.muted;P.g.font='11px Inter';P.g.textAlign='left';P.g.textBaseline='bottom';
+    P.g.fillText('uniform = 1/8',P.X(0)+4,P.Y(maxp)-2);
+    const bw=(P.X(1)-P.X(0))/M*0.74, gap=(P.X(1)-P.X(0))/M;
+    for(let i=0;i<M;i++){
+      const x0=P.X(0)+gap*(i+0.13);
+      const pv=p[i];
+      // prob bar
+      const yb=P.Y(0), yt=P.Y(pv);
+      const grd=P.g.createLinearGradient(0,yt,0,yb);
+      grd.addColorStop(0,C.blue);grd.addColorStop(1,'#2b6f86');
+      P.g.fillStyle=grd;roundRect(P.g,x0,yt,bw,yb-yt,4);P.g.fill();
+      // contribution overlay (-p log2 p), scaled into same axis (it's a value in bits, can exceed; clamp)
+      const contrib=pv>0?-pv*log2(pv):0;
+      P.g.strokeStyle='#ffffffcc';P.g.lineWidth=1.6;
+      const yc=P.Y(clamp(contrib,0,0.55));
+      P.g.beginPath();P.g.moveTo(x0,yc);P.g.lineTo(x0+bw,yc);P.g.stroke();
+      P.g.fillStyle=C.muted;P.g.font='11px ui-monospace';P.g.textAlign='center';P.g.textBaseline='top';
+      P.g.fillText(fmt(pv,2),x0+bw/2,yb+5);
+    }
+    P.g.fillStyle='#ffffffaa';P.g.font='11px Inter';P.g.textAlign='right';P.g.textBaseline='top';
+    P.g.fillText('— white line = −pₖ log₂ pₖ contribution',P.X(1),P.pad.t-2);
+    $('ro_eb').textContent=fmt(H,3);$('ro_ebmax').textContent=fmt(log2(M),3);
+  }
+  function roundRect(g,x,y,w,h,r){r=Math.min(r,w/2,Math.abs(h)/2);g.beginPath();
+    g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);
+    g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();}
+  // dragging
+  let drag=-1;
+  function barAt(px){const gap=(P.X(1)-P.X(0))/M;return clamp(Math.floor((px-P.X(0))/gap),0,M-1);}
+  function setFromY(py){const v=clamp(P.iY(py),0.002,0.55);if(drag>=0){
+    // set this prob to v by adjusting its weight; keep others' weights, renormalize
+    const others=w.reduce((a,b,i)=>i===drag?a:a+b,0);
+    // p_drag = w_drag/(w_drag+others)=v -> w_drag=v*others/(1-v)
+    w[drag]=clamp(v*others/(1-v),0.0001,1000);draw();}}
+  cw.addEventListener('pointerdown',e=>{const m=pointer(cw,e);drag=barAt(m.x);cw.setPointerCapture(e.pointerId);setFromY(m.y);});
+  cw.addEventListener('pointermove',e=>{if(drag<0)return;setFromY(pointer(cw,e).y);});
+  cw.addEventListener('pointerup',()=>drag=-1);
+  cw.addEventListener('pointerleave',()=>drag=-1);
+  $('b_unif').onclick=()=>{w=Array(M).fill(1);draw();};
+  $('b_peak').onclick=()=>{w=Array(M).fill(0.04);w[3]=1.6;w[4]=0.5;draw();};
+  $('b_rand').onclick=()=>{w=Array.from({length:M},()=>0.05+Math.random());draw();};
+  draw();
+})();
+
+/* ====================== 3 · CODING (area = entropy) ====================== */
+(function(){
+  const M=5; const names=['A','B','C','D','E'];
+  let w=[0.40,0.24,0.16,0.12,0.08].map(v=>v);
+  const P=new Plot($('cv_coding'),900,360,[0,1],[0,6],{l:48,b:36,t:18,r:16});
+  const cw=$('cv_coding');
+  function probs(){const s=w.reduce((a,b)=>a+b,0);return w.map(v=>v/s);}
+  function draw(){
+    const p=probs();const H=p.reduce((a,q)=>a-(q>0?q*log2(q):0),0);
+    P.clear();P.grid(null,[1,2,3,4,5]);
+    P.axes({xticks:[{x:0,l:'0'},{x:0.5,l:'cumulative prob'},{x:1,l:'1'}],
+      yticks:[0,1,2,3,4,5],ylabel:'code length  −log₂ pₖ  (bits)'});
+    let cum=0;const cols=[C.blue,C.teal,C.green,C.yellow,C.orange];
+    for(let i=0;i<M;i++){
+      const pv=p[i];const len=-log2(pv);
+      const x0=P.X(cum),x1=P.X(cum+pv);const y0=P.Y(0),y1=P.Y(clamp(len,0,6));
+      P.g.fillStyle=cols[i]+'66';P.g.fillRect(x0,y1,x1-x0,y0-y1);
+      P.g.strokeStyle=cols[i];P.g.lineWidth=1.5;P.g.strokeRect(x0,y1,x1-x0,y0-y1);
+      if(x1-x0>16){P.g.fillStyle=C.ink;P.g.font='bold 13px Inter';P.g.textAlign='center';P.g.textBaseline='middle';
+        P.g.fillText(names[i],(x0+x1)/2,P.Y(0.4));
+        P.g.fillStyle=C.muted;P.g.font='10px ui-monospace';
+        P.g.fillText(fmt(len,1)+'b',(x0+x1)/2,y1-10);}
+      cum+=pv;
+    }
+    P.g.fillStyle='#ffffffcc';P.g.font='12px Inter';P.g.textAlign='left';P.g.textBaseline='top';
+    P.g.fillText('total shaded area  =  average bits/symbol  =  entropy',P.X(0)+6,P.pad.t-2);
+    $('ro_code').textContent=fmt(H,2);
+  }
+  let drag=-1;
+  function colAt(px){let cum=0;const p=probs();for(let i=0;i<M;i++){if(px<P.X(cum+p[i]))return i;cum+=p[i];}return M-1;}
+  function setY(py){if(drag<0)return;const len=clamp(P.iY(py),0.05,6);const pv=Math.pow(2,-len);
+    const others=w.reduce((a,b,i)=>i===drag?a:a+b,0);w[drag]=clamp(pv*others/(1-pv),0.0001,1000);draw();}
+  cw.addEventListener('pointerdown',e=>{const m=pointer(cw,e);drag=colAt(m.x);cw.setPointerCapture(e.pointerId);setY(m.y);});
+  cw.addEventListener('pointermove',e=>{if(drag<0)return;setY(pointer(cw,e).y);});
+  cw.addEventListener('pointerup',()=>drag=-1);cw.addEventListener('pointerleave',()=>drag=-1);
+  draw();
+})();
+
+/* ====================== 4 · MICROSTATES ====================== */
+(function(){
+  const M=10;
+  const cw=$('cv_micro');
+  const W=900,Ht=360;const dpr=Math.min(window.devicePixelRatio||1,2);
+  cw.width=W*dpr;cw.height=Ht*dpr;cw.style.width='100%';cw.style.maxWidth=W+'px';cw.style.height='auto';
+  const g=cw.getContext('2d');g.scale(dpr,dpr);
+  const slN=$('sl_N'),slP=$('sl_peakn');
+  function draw(){
+    const N=parseInt(slN.value), k=parseFloat(slP.value);
+    // target distribution: tent peaked at center, sharpness k
+    const center=(M-1)/2;
+    let pr=[];for(let i=0;i<M;i++){pr.push(Math.exp(-k*Math.abs(i-center)));}
+    const ps=pr.reduce((a,b)=>a+b,0);pr=pr.map(v=>v/ps);
+    // counts
+    let n=pr.map(v=>Math.round(v*N));
+    let diff=N-n.reduce((a,b)=>a+b,0);let idx=0;while(diff!==0){n[idx%M]+=Math.sign(diff);diff-=Math.sign(diff);idx++;}
+    n=n.map(v=>Math.max(0,v));
+    // entropy + lnW
+    const Nn=n.reduce((a,b)=>a+b,0);
+    const p=n.map(v=>v/Nn);
+    const Hh=p.reduce((a,q)=>a-(q>0?q*Math.log(q):0),0);
+    let lnW=lgamma(Nn+1);for(let i=0;i<M;i++)lnW-=lgamma(n[i]+1);
+    // render
+    g.clearRect(0,0,W,Ht);
+    const padL=44,padB=40,padT=22,padR=16;
+    const plotW=W-padL-padR,plotH=Ht-padB-padT;
+    const colW=plotW/M;const maxN=Math.max(...n,1);
+    // grid
+    g.strokeStyle=C.grid;g.lineWidth=1;
+    for(let gy=0;gy<=4;gy++){const y=padT+plotH*gy/4;g.beginPath();g.moveTo(padL,y);g.lineTo(W-padR,y);g.stroke();}
+    g.strokeStyle=C.axis;g.beginPath();g.moveTo(padL,padT+plotH);g.lineTo(W-padR,padT+plotH);g.stroke();
+    for(let i=0;i<M;i++){
+      const x0=padL+colW*i+4, bw=colW-8;
+      const h=n[i]/maxN*plotH;
+      // draw balls if small N, else bar
+      if(Nn<=160){
+        const cols=Math.max(1,Math.floor(bw/12));const r=Math.min(5,bw/(2*cols)-1);
+        for(let b=0;b<n[i];b++){const cxi=b%cols,cyi=Math.floor(b/cols);
+          const cx=x0+ (cxi+0.5)*(bw/cols);const cy=padT+plotH-(cyi+0.5)*(r*2+2);
+          if(cy<padT)break;
+          g.beginPath();g.arc(cx,cy,r,0,7);
+          g.fillStyle=`hsl(${190+i*14},70%,${55+ (b%2)*6}%)`;g.fill();}
+      }else{
+        const grd=g.createLinearGradient(0,padT+plotH-h,0,padT+plotH);
+        grd.addColorStop(0,C.teal);grd.addColorStop(1,'#1c5a52');
+        g.fillStyle=grd;g.fillRect(x0,padT+plotH-h,bw,h);
+      }
+      g.fillStyle=C.muted;g.font='11px ui-monospace';g.textAlign='center';g.textBaseline='top';
+      g.fillText(n[i],x0+bw/2,padT+plotH+6);
+    }
+    g.fillStyle=C.muted;g.font='12px Inter';g.textAlign='left';g.textBaseline='top';
+    g.fillText('bin counts {nᵢ}  —  this histogram is one "macrostate"',padL,2);
+    $('v_N').textContent=N;$('v_peak').textContent=fmt(k,2);
+    $('ro_lnw').textContent=fmt(lnW/Nn,3);
+    $('ro_Hphys').textContent=fmt(Hh,3);
+    $('ro_lnwtot').textContent=Math.round(lnW);
+  }
+  slN.addEventListener('input',draw);slP.addEventListener('input',draw);draw();
+})();
+
+/* ====================== 5 · DIFFERENTIAL ENTROPY ====================== */
+(function(){
+  const P=new Plot($('cv_diffent'),460,330,[-4,4],[0,1.8],{l:42,b:34});
+  const Ph=new Plot($('cv_diffent_h'),460,330,[0,3],[-2.2,2.2],{l:48,b:34});
+  const sSig=$('sl_sig'),sDel=$('sl_del');
+  const zeroSig=1/Math.sqrt(2*Math.PI*Math.E);
+  function draw(){
+    const s=parseFloat(sSig.value),d=parseFloat(sDel.value);
+    // left: density + bins
+    P.clear();P.grid([-2,0,2],[0.5,1,1.5]);
+    P.axes({xticks:[-4,-2,0,2,4],yticks:[0,0.5,1,1.5],xlabel:'x',ylabel:'p(x)'});
+    // bins
+    P.g.fillStyle='#f6c94522';P.g.strokeStyle='#f6c94555';P.g.lineWidth=1;
+    for(let x=-4;x<4;x+=d){const h=gauss(x+d/2,0,s);P.g.fillRect(P.X(x),P.Y(clamp(h,0,1.8)),P.X(x+d)-P.X(x),P.Y(0)-P.Y(clamp(h,0,1.8)));}
+    P.fillUnder(x=>clamp(gauss(x,0,s),0,1.8),'#5ec8e825');
+    P.curve(x=>gauss(x,0,s),C.blue,2.6,true);
+    const Hd=0.5*Math.log(2*Math.PI*Math.E*s*s);
+    const Hdisc=Hd-Math.log(d); // nats; convert to bits for display? keep nats consistent w/ book, but show bits-ish
+    // right: H vs sigma
+    Ph.clear();Ph.grid([1,2],[-2,-1,0,1,2]);
+    Ph.axes({xticks:[0,1,2,3],yticks:[{y:-2,l:'−2'},{y:-1,l:'−1'},0,1,2],xlabel:'σ',ylabel:'H (nats)'});
+    // shade negative
+    Ph.g.fillStyle='#fc6a5d15';Ph.g.fillRect(Ph.X(0),Ph.Y(0),Ph.X(3)-Ph.X(0),Ph.Y(-2.2)-Ph.Y(0));
+    Ph.curve(x=>x<=0?-5:0.5*Math.log(2*Math.PI*Math.E*x*x),C.blue,2.4,true);
+    Ph.g.strokeStyle=C.red;Ph.g.setLineDash([4,4]);Ph.g.beginPath();
+    Ph.g.moveTo(Ph.X(zeroSig),Ph.Y(-2.2));Ph.g.lineTo(Ph.X(zeroSig),Ph.Y(2.2));Ph.g.stroke();Ph.g.setLineDash([]);
+    Ph.label(zeroSig+0.05,-1.7,'H=0 at σ≈0.242',C.red);
+    Ph.dot(s,clamp(Hd,-2.2,2.2),5,C.yellow);
+    $('v_sig').textContent=fmt(s,2);$('v_del').textContent=fmt(d,2);
+    $('ro_Hd').textContent=fmt(Hd,2);
+    $('ro_Hdisc').textContent=fmt(Hdisc/LN2,2); // in bits, always positive for reasonable d
+  }
+  sSig.addEventListener('input',draw);sDel.addEventListener('input',draw);draw();
+})();
+
+/* ====================== 6 · MAX ENTROPY ====================== */
+(function(){
+  const P=new Plot($('cv_maxent'),460,330,[-4,4],[0,0.75],{l:42,b:34});
+  const Pb=new Plot($('cv_maxent_bars'),460,330,[0,4],[0,1.6],{l:48,b:34,r:16});
+  // all mean 0, var 1
+  const gaussD=x=>gauss(x,0,1);
+  const lap_b=1/Math.sqrt(2); const lapD=x=>Math.exp(-Math.abs(x)/lap_b)/(2*lap_b);
+  const uw=Math.sqrt(12)/2; const uniD=x=>Math.abs(x)<=uw?1/(2*uw):0;
+  const tw=Math.sqrt(6); const triD=x=>Math.abs(x)<=tw?(tw-Math.abs(x))/(tw*tw):0;
+  function entropy(fn){let H=0;const dx=0.004;for(let x=-12;x<12;x+=dx){const p=fn(x);if(p>1e-12)H-=p*Math.log(p)*dx;}return H;}
+  const dists=[
+    {n:'Gaussian',f:gaussD,c:C.blue},
+    {n:'Triangular',f:triD,c:C.green},
+    {n:'Laplace',f:lapD,c:C.purple},
+    {n:'Uniform',f:uniD,c:C.orange},
+  ];
+  const Hs=dists.map(d=>entropy(d.f));
+  function draw(){
+    P.clear();P.grid([-2,0,2],[0.25,0.5]);
+    P.axes({xticks:[-4,-2,0,2,4],yticks:[0,0.25,0.5,0.75],xlabel:'x',ylabel:'p(x)   (all μ=0, σ²=1)'});
+    dists.forEach(d=>P.curve(x=>clamp(d.f(x),0,0.75),d.c,2.2,true));
+    // legend
+    dists.forEach((d,i)=>{P.g.fillStyle=d.c;P.g.fillRect(P.X(1.7),P.pad.t+6+i*18,11,11);
+      P.g.fillStyle=C.ink;P.g.font='12px Inter';P.g.textAlign='left';P.g.textBaseline='top';
+      P.g.fillText(d.n,P.X(1.7)+16,P.pad.t+5+i*18);});
+    // bars
+    Pb.clear();Pb.grid(null,[0.5,1,1.5]);
+    Pb.axes({yticks:[{y:0,l:'0'},{y:0.5,l:'0.5'},{y:1,l:'1.0'},{y:1.5,l:'1.5'}],ylabel:'differential entropy (nats)'});
+    const n=dists.length,gap=(Pb.X(4)-Pb.X(0))/n,bw=gap*0.6;
+    dists.forEach((d,i)=>{const x0=Pb.X(0)+gap*(i+0.2);const y0=Pb.Y(0),y1=Pb.Y(Hs[i]);
+      const grd=Pb.g.createLinearGradient(0,y1,0,y0);grd.addColorStop(0,d.c);grd.addColorStop(1,d.c+'44');
+      Pb.g.fillStyle=grd;Pb.g.fillRect(x0,y1,bw,y0-y1);
+      Pb.g.fillStyle=C.ink;Pb.g.font='bold 12px ui-monospace';Pb.g.textAlign='center';Pb.g.textBaseline='bottom';
+      Pb.g.fillText(fmt(Hs[i],3),x0+bw/2,y1-4);
+      Pb.g.fillStyle=C.muted;Pb.g.font='11px Inter';Pb.g.textBaseline='top';
+      Pb.g.fillText(d.n,x0+bw/2,y0+5);});
+    // winner line
+    Pb.g.strokeStyle=C.blue;Pb.g.setLineDash([5,4]);Pb.g.beginPath();
+    Pb.g.moveTo(Pb.X(0),Pb.Y(Hs[0]));Pb.g.lineTo(Pb.X(4),Pb.Y(Hs[0]));Pb.g.stroke();Pb.g.setLineDash([]);
+  }
+  draw();
+})();
+
+/* ====================== 7 · KL DIVERGENCE ====================== */
+let klState={mu:1.2,sig:1.6};
+(function(){
+  const P=new Plot($('cv_kl'),900,360,[-5,5],[-0.35,0.55],{l:48,b:34,t:18});
+  const Px=new Plot($('cv_xent'),900,140,[0,1],[0,2.4],{l:48,b:30,t:14,r:16});
+  const sMu=$('sl_klmu'),sSig=$('sl_klsig');
+  const Hp=0.5*Math.log(2*Math.PI*Math.E); // nats entropy of N(0,1)
+  function klFwd(mu,s){return Math.log(s)+(1+mu*mu)/(2*s*s)-0.5;} // KL(p||q), p=N(0,1)
+  function klRev(mu,s){return -Math.log(s)+(s*s+mu*mu)/2-0.5;}    // KL(q||p)
+  function draw(){
+    const mu=klState.mu,s=klState.sig;
+    P.clear();P.grid([-2,0,2],[0,0.25]);
+    P.axes({xticks:[-4,-2,0,2,4],yticks:[{y:-0.25,l:'−0.25'},{y:0,l:'0'},{y:0.25,l:'0.25'},{y:0.5,l:'0.5'}],
+      xlabel:'x',ylabel:'p, q   and   integrand p·ln(p/q)'});
+    // integrand shaded by sign
+    const integ=x=>{const p=gauss(x,0,1),q=gauss(x,mu,s);return p<1e-9?0:p*Math.log(p/Math.max(q,1e-12));};
+    // fill pos/neg
+    const N=400;const g=P.g;
+    for(let i=0;i<N;i++){const x=-5+10*i/N,x2=-5+10*(i+1)/N;const v=integ((x+x2)/2);
+      g.fillStyle=v>=0?'#fc6a5d33':'#5ec8e833';
+      g.beginPath();g.moveTo(P.X(x),P.Y(0));g.lineTo(P.X(x),P.Y(clamp(integ(x),-0.35,0.55)));
+      g.lineTo(P.X(x2),P.Y(clamp(integ(x2),-0.35,0.55)));g.lineTo(P.X(x2),P.Y(0));g.closePath();g.fill();}
+    P.curve(x=>clamp(integ(x),-0.35,0.55),'#ffffff99',1.4,false);
+    P.curve(x=>gauss(x,0,1),C.yellow,2.6,true);
+    P.curve(x=>gauss(x,mu,s),C.red,2.6,true);
+    P.label(-4.7,0.46,'p = N(0,1)',C.yellow);P.label(-4.7,0.40,'q = N(μ,σ)',C.red);
+    const kf=klFwd(mu,s)/LN2, kr=klRev(mu,s)/LN2;
+    $('v_klmu').textContent=fmt(mu,2);$('v_klsig').textContent=fmt(s,2);
+    $('ro_klf').textContent=fmt(kf,2);$('ro_klr').textContent=fmt(kr,2);
+    // cross-entropy stacked bar
+    Px.clear();
+    Px.axes({yticks:[{y:0,l:'0'},{y:1,l:'1'},{y:2,l:'2'}],ylabel:'bits / sample'});
+    const HpB=Hp/LN2, klB=Math.max(0,kf);
+    const x0=Px.X(0.28),bw=Px.X(0.72)-Px.X(0.28);
+    Px.g.fillStyle=C.blue;Px.g.fillRect(x0,Px.Y(HpB),bw,Px.Y(0)-Px.Y(HpB));
+    Px.g.fillStyle=C.red;Px.g.fillRect(x0,Px.Y(HpB+klB),bw,Px.Y(HpB)-Px.Y(HpB+klB));
+    Px.g.fillStyle=C.ink;Px.g.font='12px Inter';Px.g.textAlign='left';Px.g.textBaseline='middle';
+    Px.g.fillText('H(p) — irreducible floor = '+fmt(HpB,2),x0+bw+12,Px.Y(HpB/2));
+    Px.g.fillStyle='#ffb3ab';Px.g.fillText('KL(p‖q) — your error = '+fmt(klB,2),x0+bw+12,Px.Y(HpB+klB/2));
+    Px.g.fillStyle=C.muted;Px.g.font='11px Inter';Px.g.textAlign='center';Px.g.textBaseline='bottom';
+    Px.g.fillText('cross-entropy H(p,q) = '+fmt(HpB+klB,2)+' bits',x0+bw/2,Px.Y(HpB+klB)-4);
+  }
+  function setMu(v){klState.mu=v;sMu.value=v;}
+  function setSig(v){klState.sig=v;sSig.value=v;}
+  sMu.addEventListener('input',()=>{klState.mu=parseFloat(sMu.value);draw();});
+  sSig.addEventListener('input',()=>{klState.sig=parseFloat(sSig.value);draw();});
+  $('b_klmatch').onclick=()=>{
+    const t0=performance.now();const m0=klState.mu,s0=klState.sig;
+    function anim(t){const k=clamp((t-t0)/700,0,1);const e=1-Math.pow(1-k,3);
+      klState.mu=m0*(1-e);klState.sig=s0+(1-s0)*e;sMu.value=klState.mu;sSig.value=klState.sig;draw();
+      if(k<1)requestAnimationFrame(anim);}
+    requestAnimationFrame(anim);
+  };
+  draw();
+})();
+
+/* ====================== 8 · FORWARD vs REVERSE KL (modes) ====================== */
+(function(){
+  // bimodal p (unequal weights so reverse picks dominant mode)
+  const wL=0.6,wR=0.4,mL=-2,mR=2,sm=0.6;
+  const pPdf=x=>wL*gauss(x,mL,sm)+wR*gauss(x,mR,sm);
+  const P=new Plot($('cv_modes'),900,380,[-6,6],[0,0.42],{l:48,b:34,t:18});
+  const sMu=$('sl_mmu'),sSig=$('sl_msig');
+  let st={mu:0,sig:1.8};
+  // precompute grid for KL
+  const GX=[];const dx=12/500;for(let x=-6;x<6;x+=dx)GX.push(x);
+  const pArr=GX.map(pPdf);
+  function klFwd(mu,s){let v=0;for(let i=0;i<GX.length;i++){const p=pArr[i];if(p>1e-12){const q=Math.max(gauss(GX[i],mu,s),1e-12);v+=p*Math.log(p/q)*dx;}}return v;}
+  function klRev(mu,s){let v=0;for(let i=0;i<GX.length;i++){const q=gauss(GX[i],mu,s);if(q>1e-12){const p=Math.max(pArr[i],1e-12);v+=q*Math.log(q/p)*dx;}}return v;}
+  function optimize(which){
+    let best=1e9,bm=0,bs=1;
+    for(let mu=-4;mu<=4;mu+=0.08)for(let s=0.25;s<=3.0;s+=0.06){
+      const v=which==='f'?klFwd(mu,s):klRev(mu,s);
+      if(v<best){best=v;bm=mu;bs=s;}}
+    return {mu:bm,sig:bs};
+  }
+  function draw(){
+    const mu=st.mu,s=st.sig;
+    P.clear();P.grid([-4,-2,0,2,4],[0.1,0.2,0.3]);
+    P.axes({xticks:[-6,-4,-2,0,2,4,6],yticks:[0,0.1,0.2,0.3,0.4],xlabel:'x',ylabel:'density'});
+    P.fillUnder(x=>clamp(pPdf(x),0,0.42),'#f6c94518');
+    P.curve(x=>pPdf(x),C.yellow,2.8,true);
+    P.fillUnder(x=>clamp(gauss(x,mu,s),0,0.42),'#54d6bd1c');
+    P.curve(x=>gauss(x,mu,s),C.teal,2.8,true);
+    P.label(-5.6,0.39,'p  (bimodal truth)',C.yellow);
+    P.label(-5.6,0.355,'q  (single Gaussian)',C.teal);
+    $('v_mmu').textContent=fmt(mu,2);$('v_msig').textContent=fmt(s,2);
+    $('ro_mf').textContent=fmt(klFwd(mu,s)/LN2,3);
+    $('ro_mr').textContent=fmt(klRev(mu,s)/LN2,3);
+  }
+  function animateTo(tgt){const t0=performance.now();const m0=st.mu,s0=st.sig;
+    function step(t){const k=clamp((t-t0)/650,0,1);const e=1-Math.pow(1-k,3);
+      st.mu=m0+(tgt.mu-m0)*e;st.sig=s0+(tgt.sig-s0)*e;sMu.value=st.mu;sSig.value=st.sig;draw();
+      if(k<1)requestAnimationFrame(step);}requestAnimationFrame(step);}
+  sMu.addEventListener('input',()=>{st.mu=parseFloat(sMu.value);draw();});
+  sSig.addEventListener('input',()=>{st.sig=parseFloat(sSig.value);draw();});
+  $('b_fwd').onclick=()=>animateTo(optimize('f'));
+  $('b_rev').onclick=()=>animateTo(optimize('r'));
+  draw();
+})();
+
+/* ====================== 9 · MUTUAL INFO: Venn + chain ====================== */
+(function(){
+  const cw=$('cv_venn');const W=460,Ht=330;const dpr=Math.min(window.devicePixelRatio||1,2);
+  cw.width=W*dpr;cw.height=Ht*dpr;cw.style.width='100%';cw.style.maxWidth=W+'px';cw.style.height='auto';
+  const g=cw.getContext('2d');g.scale(dpr,dpr);
+  const Pc=new Plot($('cv_chain'),460,330,[0,1],[0,2.2],{l:48,b:34,r:16});
+  const sA=$('sl_a'),sF=$('sl_f');
+  function circleOverlap(d,r1,r2){
+    if(d>=r1+r2)return 0;if(d<=Math.abs(r1-r2))return Math.PI*Math.min(r1,r2)**2;
+    const a1=Math.acos(clamp((d*d+r1*r1-r2*r2)/(2*d*r1),-1,1));
+    const a2=Math.acos(clamp((d*d+r2*r2-r1*r1)/(2*d*r2),-1,1));
+    return r1*r1*a1+r2*r2*a2-0.5*Math.sqrt(Math.max(0,(-d+r1+r2)*(d+r1-r2)*(d-r1+r2)*(d+r1+r2)));
+  }
+  function solveD(r1,r2,target){let lo=Math.abs(r1-r2),hi=r1+r2;
+    for(let i=0;i<40;i++){const mid=(lo+hi)/2;if(circleOverlap(mid,r1,r2)>target)lo=mid;else hi=mid;}return (lo+hi)/2;}
+  function draw(){
+    const a=parseFloat(sA.value),f=parseFloat(sF.value);
+    const Hx=Hb(a);
+    const pY1=(1-a)*f+a*(1-f);
+    const Hy=Hb(pY1);
+    const Hygx=Hb(f);             // H[Y|X]
+    const Hjoint=Hx+Hygx;         // chain rule (exact)
+    const I=Hy-Hygx;              // mutual info
+    const Hxgy=Hjoint-Hy;
+    // ---- Venn ----
+    g.clearRect(0,0,W,Ht);
+    const cx=W/2,cy=Ht/2+6;
+    const scale=2600; // px^2 per bit
+    const r1=Math.sqrt(Math.max(Hx,1e-3)*scale/Math.PI);
+    const r2=Math.sqrt(Math.max(Hy,1e-3)*scale/Math.PI);
+    const targetOverlap=clamp(I,0,Math.min(Hx,Hy)-1e-4)*scale;
+    let d=I<1e-4? r1+r2+8 : solveD(r1,r2,targetOverlap);
+    const x1=cx-d/2,x2=cx+d/2;
+    g.globalCompositeOperation='lighter';
+    g.beginPath();g.arc(x1,cy,r1,0,7);g.fillStyle='rgba(94,200,232,0.30)';g.fill();
+    g.beginPath();g.arc(x2,cy,r2,0,7);g.fillStyle='rgba(246,201,69,0.28)';g.fill();
+    g.globalCompositeOperation='source-over';
+    g.lineWidth=2;g.strokeStyle=C.blue;g.beginPath();g.arc(x1,cy,r1,0,7);g.stroke();
+    g.strokeStyle=C.yellow;g.beginPath();g.arc(x2,cy,r2,0,7);g.stroke();
+    g.font='bold 13px Inter';g.textAlign='center';g.textBaseline='middle';
+    g.fillStyle=C.blue;g.fillText('H[X]',x1-r1*0.45,cy-r1*0.5);
+    g.fillStyle=C.yellow;g.fillText('H[Y]',x2+r2*0.45,cy-r2*0.5);
+    if(I>0.02){g.fillStyle=C.purple;g.font='bold 12px Inter';g.fillText('I',cx,cy);}
+    g.fillStyle=C.muted;g.font='12px Inter';g.textAlign='center';g.textBaseline='top';
+    g.fillText('overlap area  =  I[X,Y]  =  '+fmt(I,2)+' bits',cx,Ht-22);
+    g.textBaseline='bottom';g.fillStyle='#777';
+    g.fillText(f>=0.49?'≈ independent':(f<=0.01?'Y determines X':''),cx,28);
+    // ---- chain rule bars ----
+    Pc.clear();Pc.grid(null,[0.5,1,1.5,2]);
+    Pc.axes({yticks:[{y:0,l:'0'},{y:0.5,l:'0.5'},{y:1,l:'1.0'},{y:1.5,l:'1.5'},{y:2,l:'2.0'}],ylabel:'bits'});
+    // bar 1: H[X,Y] split as H[X] + H[Y|X]
+    const bw=Pc.X(0.28)-Pc.X(0.06);
+    let x0=Pc.X(0.06);
+    Pc.g.fillStyle=C.blue;Pc.g.fillRect(x0,Pc.Y(Hx),bw,Pc.Y(0)-Pc.Y(Hx));
+    Pc.g.fillStyle=C.red;Pc.g.fillRect(x0,Pc.Y(Hx+Hygx),bw,Pc.Y(Hx)-Pc.Y(Hx+Hygx));
+    Pc.g.fillStyle=C.muted;Pc.g.font='11px Inter';Pc.g.textAlign='center';Pc.g.textBaseline='top';
+    Pc.g.fillText('H[X,Y]',x0+bw/2,Pc.Y(0)+6);
+    Pc.g.fillStyle=C.blue;Pc.g.textBaseline='middle';Pc.g.fillText('H[X]',x0+bw/2,Pc.Y(Hx/2));
+    Pc.g.fillStyle='#ffb3ab';Pc.g.fillText('H[Y|X]',x0+bw/2,Pc.Y(Hx+Hygx/2));
+    // bar 2: H[Y] split as I + H[Y|X]
+    x0=Pc.X(0.40);
+    Pc.g.fillStyle=C.purple;Pc.g.fillRect(x0,Pc.Y(I),bw,Pc.Y(0)-Pc.Y(I));
+    Pc.g.fillStyle=C.red;Pc.g.fillRect(x0,Pc.Y(I+Hygx),bw,Pc.Y(I)-Pc.Y(I+Hygx));
+    Pc.g.fillStyle=C.muted;Pc.g.textBaseline='top';Pc.g.fillText('H[Y]',x0+bw/2,Pc.Y(0)+6);
+    Pc.g.fillStyle=C.purple;Pc.g.textBaseline='middle';if(I>0.12)Pc.g.fillText('I',x0+bw/2,Pc.Y(I/2));
+    Pc.g.fillStyle='#ffb3ab';Pc.g.fillText('H[Y|X]',x0+bw/2,Pc.Y(I+Hygx/2));
+    // bar 3: H[X] split as I + H[X|Y]
+    x0=Pc.X(0.74);
+    Pc.g.fillStyle=C.purple;Pc.g.fillRect(x0,Pc.Y(I),bw,Pc.Y(0)-Pc.Y(I));
+    Pc.g.fillStyle=C.green;Pc.g.fillRect(x0,Pc.Y(I+Hxgy),bw,Pc.Y(I)-Pc.Y(I+Hxgy));
+    Pc.g.fillStyle=C.muted;Pc.g.textBaseline='top';Pc.g.fillText('H[X]',x0+bw/2,Pc.Y(0)+6);
+    Pc.g.fillStyle=C.purple;Pc.g.textBaseline='middle';if(I>0.12)Pc.g.fillText('I',x0+bw/2,Pc.Y(I/2));
+    Pc.g.fillStyle='#bff0c2';Pc.g.fillText('H[X|Y]',x0+bw/2,Pc.Y(I+Hxgy/2));
+
+    $('v_a').textContent=fmt(a,2);$('v_f').textContent=fmt(f,3);
+    $('ro_Hx').textContent=fmt(Hx,2);$('ro_Hy').textContent=fmt(Hy,2);
+    $('ro_I').textContent=fmt(I,2);$('ro_Hygx').textContent=fmt(Hygx,2);
+  }
+  sA.addEventListener('input',draw);sF.addEventListener('input',draw);draw();
+})();
+
+/* ====================== 9b · CORRELATED GAUSSIANS ====================== */
+(function(){
+  const P=new Plot($('cv_scatter'),420,340,[-3.6,3.6],[-3.6,3.6],{l:40,b:34,t:14,r:14});
+  const sR=$('sl_rho');
+  // fixed base normal samples
+  function rn(){let u=0,v=0;while(u===0)u=Math.random();while(v===0)v=Math.random();
+    return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+  const base=Array.from({length:900},()=>[rn(),rn()]);
+  function draw(){
+    const r=parseFloat(sR.value);
+    P.clear();P.grid([-2,0,2],[-2,0,2]);
+    P.axes({xticks:[-2,0,2],yticks:[-2,0,2],xlabel:'X',ylabel:'Y'});
+    const sq=Math.sqrt(1-r*r);
+    P.g.globalAlpha=0.7;
+    for(const [z1,z2] of base){const x=z1,y=r*z1+sq*z2;
+      P.g.beginPath();P.g.arc(P.X(x),P.Y(y),1.8,0,7);P.g.fillStyle=C.purple;P.g.fill();}
+    P.g.globalAlpha=1;
+    const I=-0.5*log2(1-r*r);
+    $('v_rho').textContent=fmt(r,2);$('ro_Irho').textContent=fmt(I,2);
+  }
+  sR.addEventListener('input',draw);draw();
+})();
+
+/* ====================== TABS ====================== */
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    const grp=t.dataset.group;
+    document.querySelectorAll('.tab[data-group="'+grp+'"]').forEach(x=>x.classList.toggle('active',x===t));
+    document.querySelectorAll('.tabpanel[data-group="'+grp+'"]').forEach(p=>p.classList.toggle('active',p.dataset.tab===t.dataset.tab));
+  });
+});
+
+/* ====================== shared helpers ====================== */
+function softmax(z,T){T=T||1;const m=Math.max(...z);const e=z.map(v=>Math.exp((v-m)/T));
+  const s=e.reduce((a,b)=>a+b,0);return e.map(v=>v/s);}
+const sigm=x=>1/(1+Math.exp(-x));
+function klDiscNats(p,q){let v=0;for(let i=0;i<p.length;i++){if(p[i]>1e-12)v+=p[i]*Math.log(p[i]/Math.max(q[i],1e-12));}return v;}
+function groupBars(P,n,series,labels){const g=P.g;const m=series.length;let bi=0;
+  series.forEach(s=>{const bw=0.74/m;
+    for(let i=0;i<n;i++){const xl=i+0.13+bi*bw;const px=P.X(xl);const pw=P.X(xl+bw)-px;
+      const py=P.Y(s.vals[i]),pb=P.Y(0);g.fillStyle=s.color;g.fillRect(px,Math.min(py,pb),pw,Math.abs(pb-py));}
+    bi++;});
+  g.fillStyle=C.muted;g.font='12px Inter';g.textAlign='center';g.textBaseline='top';
+  for(let i=0;i<n;i++) g.fillText(labels[i],P.X(i+0.5),P.Y(P.yr[0])+5);
+}
+
+/* ====================== RLHF · optimal policy ====================== */
+(function(){
+  const ref=[0.30,0.25,0.20,0.15,0.10], rew=[0.2,1.5,-0.5,0.8,1.0], labels=['A','B','C','D','E'];
+  const P=new Plot($('cv_rlhf_pol'),900,330,[0,5],[0,0.9],{l:46,b:34,t:24,r:16});
+  const sl=$('sl_brlhf');
+  function draw(){const beta=parseFloat(sl.value);
+    const w=ref.map((p,i)=>p*Math.exp(rew[i]/beta));const Z=w.reduce((a,b)=>a+b,0);const star=w.map(v=>v/Z);
+    P.clear();P.grid(null,[0.2,0.4,0.6,0.8]);P.axes({yticks:[0,0.4,0.8]});
+    groupBars(P,5,[{vals:ref,color:'#5ec8e8'},{vals:star,color:'#54d6bd'}],labels);
+    P.g.fillStyle='#f6c945';P.g.font='bold 12px ui-monospace';P.g.textAlign='center';P.g.textBaseline='bottom';
+    for(let i=0;i<5;i++)P.g.fillText('r='+rew[i].toFixed(1),P.X(i+0.5),P.Y(0.87));
+    const kl=klDiscNats(star,ref), er=star.reduce((a,p,i)=>a+p*rew[i],0);
+    $('v_brlhf').textContent=fmt(beta,2);$('ro_rlhf_kl').textContent=fmt(kl,3);
+    $('ro_rlhf_er').textContent=fmt(er,2);$('ro_rlhf_obj').textContent=fmt(er-beta*kl,2);
+  }
+  sl.addEventListener('input',draw);
+  $('b_rlhf_lo').onclick=()=>{sl.value=0.1;draw();};
+  $('b_rlhf_hi').onclick=()=>{sl.value=6;draw();};
+  draw();
+})();
+
+/* ====================== PPO · clipped surrogate ====================== */
+(function(){
+  const P=new Plot($('cv_ppo_clip'),900,330,[0,2],[-2.6,2.6],{l:48,b:36,t:18,r:16});
+  const sA=$('sl_ppoA'),sE=$('sl_ppoE');
+  function poly(fn,color,dash,lw){const g=P.g;g.save();g.beginPath();const N=300;
+    for(let i=0;i<=N;i++){const x=P.xr[0]+(P.xr[1]-P.xr[0])*i/N;const y=clamp(fn(x),P.yr[0],P.yr[1]);
+      i?g.lineTo(P.X(x),P.Y(y)):g.moveTo(P.X(x),P.Y(y));}
+    g.strokeStyle=color;g.lineWidth=lw||2.4;g.setLineDash(dash||[]);
+    if(!dash){g.shadowColor=color;g.shadowBlur=8;}g.stroke();g.restore();}
+  function draw(){const A=parseFloat(sA.value),e=parseFloat(sE.value);
+    P.clear();P.grid([0.5,1,1.5],[-2,-1,1,2]);
+    P.axes({xticks:[0,0.5,1,1.5,2],yticks:[{y:-2,l:'−2'},0,2],xlabel:'ratio ρ = πθ / πθ_old',ylabel:'clipped surrogate'});
+    P.g.strokeStyle='#f6c94588';P.g.setLineDash([5,4]);
+    [1-e,1+e].forEach(x=>{P.g.beginPath();P.g.moveTo(P.X(x),P.Y(-2.6));P.g.lineTo(P.X(x),P.Y(2.6));P.g.stroke();});
+    P.g.setLineDash([]);P.g.strokeStyle='#444';P.g.beginPath();P.g.moveTo(P.X(1),P.Y(-2.6));P.g.lineTo(P.X(1),P.Y(2.6));P.g.stroke();
+    poly(r=>r*A,'#8a8a9c',[6,5],2);
+    poly(r=>Math.min(r*A, clamp(r,1-e,1+e)*A), A>=0?'#84d98a':'#fc6a5d',null,3);
+    P.dot(1,clamp(A,-2.6,2.6),5,'#c08cf0');
+    $('v_ppoA').textContent=(A>=0?'+':'')+fmt(A,1);$('v_ppoE').textContent=fmt(e,2);
+  }
+  sA.addEventListener('input',draw);sE.addEventListener('input',draw);draw();
+})();
+
+/* ====================== DPO · implicit reward ====================== */
+(function(){
+  const ref=[0.30,0.25,0.20,0.15,0.10], rew=[0.2,1.5,-0.5,0.8,1.0], labels=['A','B','C','D','E'];
+  const P=new Plot($('cv_dpo_reward'),900,330,[0,5],[-2,2],{l:48,b:30,t:18,r:16});
+  const sl=$('sl_bdpo');
+  function draw(){const beta=parseFloat(sl.value);
+    const w=ref.map((p,i)=>p*Math.exp(rew[i]/beta));const Z=w.reduce((a,b)=>a+b,0);const star=w.map(v=>v/Z);
+    const rhat=star.map((p,i)=>beta*Math.log(p/ref[i]));
+    P.clear();P.grid(null,[-1,1]);P.axes({yticks:[{y:-2,l:'−2'},{y:-1,l:'−1'},0,1,2]});
+    groupBars(P,5,[{vals:rew,color:'#f6c945'},{vals:rhat,color:'#54d6bd'}],labels);
+    $('v_bdpo').textContent=fmt(beta,2);$('ro_dpo_z').textContent=fmt(beta*Math.log(Z),3);
+  }
+  sl.addEventListener('input',draw);draw();
+})();
+
+/* ====================== DPO · loss ====================== */
+(function(){
+  const P=new Plot($('cv_dpo_loss'),900,330,[-4,4],[0,1.06],{l:48,b:36,t:18,r:16});
+  const sW=$('sl_sw'),sL=$('sl_sl'),sB=$('sl_bdpo2');
+  function draw(){const sw=parseFloat(sW.value),slv=parseFloat(sL.value),b=parseFloat(sB.value);
+    const m=b*(sw-slv);
+    P.clear();P.grid([-2,0,2],[0.25,0.5,0.75,1]);
+    P.axes({xticks:[-4,-2,0,2,4],yticks:[{y:0,l:'0'},{y:0.5,l:'0.5'},{y:1,l:'1'}],
+      xlabel:'margin  m = β(s_w − s_l)',ylabel:'P(y_w ≻ y_l) = σ(m)'});
+    P.curve(x=>sigm(x),'#c08cf0',2.6,true);
+    const mm=clamp(m,-4,4);
+    P.g.strokeStyle='#555';P.g.setLineDash([4,4]);P.g.beginPath();
+    P.g.moveTo(P.X(mm),P.Y(0));P.g.lineTo(P.X(mm),P.Y(sigm(mm)));P.g.stroke();P.g.setLineDash([]);
+    P.dot(mm,sigm(mm),5,'#84d98a');
+    $('v_sw').textContent=fmt(sw,2);$('v_sl').textContent=fmt(slv,2);$('v_bdpo2').textContent=fmt(b,2);
+    $('ro_dpo_m').textContent=fmt(m,2);$('ro_dpo_p').textContent=fmt(sigm(m),3);
+    $('ro_dpo_loss').textContent=fmt(-Math.log(sigm(m)),3);$('ro_dpo_g').textContent=fmt(sigm(-m),3);
+  }
+  sW.addEventListener('input',draw);sL.addEventListener('input',draw);sB.addEventListener('input',draw);draw();
+})();
+
+/* ====================== DISTILL · temperature ====================== */
+(function(){
+  const z=[3.0,1.2,0.4,-0.8,0.1], labels=['cat','dog','fox','car','cup'];
+  const P=new Plot($('cv_dist_temp'),900,330,[0,5],[0,1.0],{l:46,b:34,t:18,r:16});
+  const sl=$('sl_distT');
+  function draw(){const T=parseFloat(sl.value);const p=softmax(z,T);
+    P.clear();P.grid(null,[0.25,0.5,0.75]);P.axes({yticks:[0,0.5,1]});
+    groupBars(P,5,[{vals:p,color:'#5ec8e8'}],labels);
+    const H=p.reduce((a,q)=>a-(q>0?q*log2(q):0),0);
+    $('v_distT').textContent=fmt(T,2);$('ro_distH').textContent=fmt(H,2);
+  }
+  sl.addEventListener('input',draw);draw();
+})();
+
+/* ====================== DISTILL · KL match ====================== */
+(function(){
+  const z=[3.0,1.2,0.4,-0.8,0.1], labels=['cat','dog','fox','car','cup'], T=3;
+  const teach=softmax(z,T);
+  const P=new Plot($('cv_dist_kl'),900,330,[0,5],[0,0.7],{l:46,b:34,t:18,r:16});
+  const sl=$('sl_dmatch');
+  function draw(){const m=parseFloat(sl.value);
+    const slog=z.map(v=>m*v);                 // m=0 → uniform, m=1 → teacher logits
+    const stud=softmax(slog,T);
+    P.clear();P.grid(null,[0.2,0.4,0.6]);P.axes({yticks:[0,0.3,0.6]});
+    groupBars(P,5,[{vals:teach,color:'#5ec8e8'},{vals:stud,color:'#54d6bd'}],labels);
+    $('v_dmatch').textContent=fmt(m,2);
+    $('ro_dkl').textContent=fmt(klDiscNats(teach,stud)/LN2,3);
+    $('ro_dklr').textContent=fmt(klDiscNats(stud,teach)/LN2,3);
+  }
+  sl.addEventListener('input',draw);draw();
+})();
+
+/* ====================== VAE · Gaussian KL ====================== */
+(function(){
+  const P=new Plot($('cv_vae_kl'),900,330,[-5,5],[0,0.9],{l:46,b:34,t:18,r:16});
+  const sMu=$('sl_vmu'),sSig=$('sl_vsig');
+  function draw(){const mu=parseFloat(sMu.value),s=parseFloat(sSig.value);
+    P.clear();P.grid([-3,0,3],[0.2,0.4,0.6,0.8]);
+    P.axes({xticks:[-4,-2,0,2,4],yticks:[0,0.4,0.8],xlabel:'z'});
+    P.fillUnder(x=>clamp(gauss(x,0,1),0,0.9),'#5ec8e820');P.curve(x=>gauss(x,0,1),'#5ec8e8',2.4,true);
+    P.fillUnder(x=>clamp(gauss(x,mu,s),0,0.9),'#54d6bd20');P.curve(x=>gauss(x,mu,s),'#54d6bd',2.6,true);
+    const muT=0.5*mu*mu, sigT=0.5*(s*s-1-Math.log(s*s));
+    $('v_vmu').textContent=fmt(mu,2);$('v_vsig').textContent=fmt(s,2);
+    $('ro_vkl').textContent=fmt(muT+sigT,3);$('ro_vmu').textContent=fmt(muT,3);$('ro_vsigt').textContent=fmt(sigT,3);
+  }
+  sMu.addEventListener('input',draw);sSig.addEventListener('input',draw);draw();
+})();
+
+/* ====================== VAE · reparam + collapse ====================== */
+(function(){
+  const Pr=new Plot($('cv_vae_reparam'),440,300,[-4,4],[0,3],{l:24,b:26,t:14,r:14});
+  const Pb=new Plot($('cv_vae_beta'),440,300,[0,8],[0,2.2],{l:38,b:34,t:14,r:14});
+  const sl=$('sl_vbeta');
+  function rn(){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+  const eps=Array.from({length:60},()=>rn());
+  function draw(){const b=parseFloat(sl.value);
+    const muS=2/(1+b), sigS=Math.sqrt(b/(1+b));
+    // reparam map
+    Pr.clear();const g=Pr.g;
+    g.fillStyle=C.muted;g.font='12px Inter';g.textAlign='left';g.textBaseline='middle';
+    g.fillText('ε ~ N(0,1)',Pr.X(-3.9),Pr.Y(2.45));
+    g.fillText('z = μ★ + σ★·ε',Pr.X(-3.9),Pr.Y(1.0));
+    g.strokeStyle=C.axis;g.beginPath();g.moveTo(Pr.X(-4),Pr.Y(2));g.lineTo(Pr.X(4),Pr.Y(2));g.stroke();
+    g.beginPath();g.moveTo(Pr.X(-4),Pr.Y(0.6));g.lineTo(Pr.X(4),Pr.Y(0.6));g.stroke();
+    eps.forEach(e=>{const z=muS+sigS*e;
+      g.fillStyle='#8a8a9c';g.beginPath();g.arc(Pr.X(clamp(e,-4,4)),Pr.Y(2),2.6,0,7);g.fill();
+      g.fillStyle='#54d6bd';g.beginPath();g.arc(Pr.X(clamp(z,-4,4)),Pr.Y(0.6),2.6,0,7);g.fill();});
+    g.strokeStyle='#c08cf0';g.setLineDash([3,3]);g.beginPath();
+    g.moveTo(Pr.X(clamp(muS,-4,4)),Pr.Y(0.6));g.lineTo(Pr.X(clamp(muS,-4,4)),Pr.Y(1.05));g.stroke();g.setLineDash([]);
+    // beta curves
+    Pb.clear();Pb.grid([2,4,6],[0.5,1,1.5,2]);
+    Pb.axes({xticks:[0,2,4,6,8],yticks:[0,1,2],xlabel:'β (KL weight)'});
+    Pb.curve(x=>2/(1+x),'#54d6bd',2.4,true);
+    Pb.curve(x=>Math.sqrt(x/(1+x)),'#5ec8e8',2.4,true);
+    Pb.dot(b,clamp(muS,0,2.2),5,'#54d6bd');Pb.dot(b,clamp(sigS,0,2.2),5,'#5ec8e8');
+    Pb.label(0.25,1.95,'μ★ (info)','#54d6bd');Pb.label(4.2,0.55,'σ★ → 1 collapse','#5ec8e8');
+    const kl=0.5*(muS*muS+sigS*sigS-1-Math.log(sigS*sigS));
+    $('v_vbeta').textContent=fmt(b,2);$('ro_vomu').textContent=fmt(muS,3);
+    $('ro_vosig').textContent=fmt(sigS,3);$('ro_voklc').textContent=fmt(kl,3);
+  }
+  sl.addEventListener('input',draw);draw();
+})();
+</script>
+</body>
+</html>

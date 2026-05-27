@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bayesian Probabilities — A Visual Tour (DLFC §2.6)</title>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],throwOnError:false});"></script>
+
+<style>
+:root{
+  --bg:#0c0c12; --bg2:#13131d; --panel:#15151f; --panel2:#1b1b27;
+  --ink:#e7e7f0; --muted:#9a9ab0; --faint:#4a4a5e; --line:#2a2a3a;
+  --blue:#5ec8e8; --yellow:#f6c945; --red:#fc6a5d; --green:#84d98a;
+  --purple:#c08cf0; --teal:#54d6bd; --orange:#f49d52;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(1200px 800px at 70% -10%, #161629 0%, var(--bg) 55%) fixed;
+  color:var(--ink);font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  line-height:1.65;font-size:16px;-webkit-font-smoothing:antialiased;}
+a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
+code,.mono{font-family:ui-monospace,"JetBrains Mono","SF Mono",Menlo,Consolas,monospace}
+nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);background:rgba(10,10,16,.72);border-bottom:1px solid var(--line)}
+nav .inner{max-width:1000px;margin:0 auto;display:flex;flex-wrap:wrap;gap:2px 14px;padding:9px 22px;font-size:12.5px}
+nav .brand{color:var(--muted);font-weight:700;letter-spacing:.4px;margin-right:8px}
+nav a{color:var(--muted);padding:2px 4px;border-radius:5px}
+nav a:hover{color:var(--ink);background:#ffffff10;text-decoration:none}
+main{max-width:1000px;margin:0 auto;padding:0 22px 120px}
+header.hero{padding:78px 0 38px;border-bottom:1px solid var(--line);margin-bottom:18px}
+.kicker{color:var(--teal);font-weight:700;letter-spacing:3px;font-size:12px;text-transform:uppercase}
+h1{font-size:clamp(30px,5vw,52px);line-height:1.08;margin:.25em 0 .15em;font-weight:800;
+  background:linear-gradient(95deg,#fff 10%,var(--blue) 55%,var(--purple) 95%);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{color:var(--muted);max-width:72ch;font-size:17px}
+section{padding:46px 0 12px;border-top:1px solid var(--line);margin-top:30px}
+section:first-of-type{border-top:none}
+h2{font-size:27px;margin:.1em 0 .1em;font-weight:750;letter-spacing:-.2px}
+h2 .num{color:var(--teal);font-weight:800;margin-right:.5ch;font-variant-numeric:tabular-nums}
+h3{font-size:18px;color:var(--ink);margin:1.4em 0 .3em;font-weight:700}
+.lead{color:var(--muted);max-width:74ch}
+p{max-width:74ch}.small{font-size:14px;color:var(--muted)}
+ul{max-width:74ch;color:var(--ink)}li{margin:.18em 0}
+b,strong{color:#fff;font-weight:650}
+.fig{background:linear-gradient(180deg,var(--panel) 0%,var(--panel2) 100%);border:1px solid var(--line);
+  border-radius:16px;padding:20px;margin:22px 0 8px;box-shadow:0 12px 40px -22px #000, inset 0 1px 0 #ffffff08}
+.fig canvas{display:block;border-radius:8px;touch-action:none}
+.fig .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:center}
+@media(max-width:760px){.fig .grid2{grid-template-columns:1fr}}
+.figcap{font-size:13.5px;color:var(--muted);margin-top:12px;border-top:1px dashed var(--line);padding-top:10px}
+.figcap b{color:var(--ink)}
+.ctrls{display:flex;flex-wrap:wrap;gap:14px 26px;align-items:center;margin-top:14px}
+.ctrl{display:flex;flex-direction:column;gap:3px;min-width:170px}
+.ctrl label{font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:10px}
+.ctrl label .v{color:var(--blue);font-variant-numeric:tabular-nums}
+input[type=range]{-webkit-appearance:none;appearance:none;height:5px;border-radius:4px;background:#2c2c3e;outline:none;cursor:pointer;width:100%}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;
+  background:var(--blue);border:2px solid #0b0b12;box-shadow:0 0 0 1px var(--blue),0 0 12px var(--blue)}
+input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:var(--blue);border:2px solid #0b0b12;box-shadow:0 0 10px var(--blue)}
+button{font-family:inherit;font-size:13px;color:var(--ink);background:#23233360;border:1px solid var(--line);
+  border-radius:9px;padding:8px 13px;cursor:pointer;transition:.15s}
+button:hover{background:#2e2e44;border-color:#444}
+button.active{border-color:var(--teal);color:#bff5e9;background:#163b36}
+button.accent{border-color:var(--teal);color:#bff5e9}button.accent:hover{background:#163b36}
+button.warm{border-color:var(--orange);color:#ffd9b0}button.warm:hover{background:#3a2a14}
+.readouts{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.ro{background:#0e0e16;border:1px solid var(--line);border-radius:10px;padding:8px 13px;min-width:118px}
+.ro .lab{font-size:11px;color:var(--muted);letter-spacing:.4px}
+.ro .num{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;font-family:ui-monospace,monospace}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.callout{background:#10101a;border-left:3px solid var(--purple);border-radius:0 10px 10px 0;padding:12px 16px;margin:16px 0;color:var(--ink)}
+.callout .t{color:var(--purple);font-weight:700;font-size:13px;letter-spacing:.4px;text-transform:uppercase}
+.aha{border-left-color:var(--yellow)}.aha .t{color:var(--yellow)}.aha .t::before{content:"💡 "}
+.tag{display:inline-block;font-size:11px;color:var(--teal);border:1px solid #234;border-radius:20px;padding:1px 9px;margin-left:8px;vertical-align:middle;background:#0d1b1a}
+.tag.llm{color:#ffd9b0;border-color:#5a3a1a;background:#1b1206}
+.footer{color:var(--faint);font-size:13px;text-align:center;padding-top:40px}
+katex{font-size:1.04em}
+.lesson{margin:26px 0 6px}
+.lesson .ltag{font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase}
+.lesson h4{font-size:19px;margin:.15em 0 .35em;font-weight:750}
+.steps{counter-reset:s;list-style:none;padding-left:0;max-width:78ch}
+.steps li{counter-increment:s;position:relative;padding-left:40px;margin:.55em 0}
+.steps li::before{content:counter(s);position:absolute;left:0;top:1px;width:26px;height:26px;border-radius:50%;
+  background:#1d1d2b;border:1px solid var(--line);color:var(--teal);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.eqbox{background:#0a0a12;border:1px solid var(--line);border-radius:12px;padding:4px 18px;margin:14px 0;overflow-x:auto}
+.legend{display:flex;flex-wrap:wrap;gap:16px;margin:10px 0 2px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:7px}.legend i{width:13px;height:13px;border-radius:3px;display:inline-block}
+.cc-blue{color:#5ec8e8}.cc-teal{color:#54d6bd}.cc-gold{color:#f6c945}.cc-green{color:#84d98a}
+.cc-red{color:#fc6a5d}.cc-purple{color:#c08cf0}.cc-orange{color:#f49d52}.cc-grey{color:#8a8a9c}
+</style>
+</head>
+<body>
+
+<nav><div class="inner">
+  <span class="brand">§2.6 BAYESIAN PROBABILITIES</span>
+  <a href="#update">Posterior</a>
+  <a href="#predict">Integrate vs point</a>
+  <a href="#average">Model averaging</a>
+  <a href="#map">Reg. = MAP</a>
+  <a href="#adamw">AdamW vs Adam</a>
+  <a href="#lora">LoRA prior</a>
+  <a href="ch2.5_information_theory_visual.html">← §2.5</a>
+</div></nav>
+
+<main>
+<header class="hero">
+  <div class="kicker">Deep Learning · Foundations &amp; Concepts — Chapter 2</div>
+  <h1>The Bayesian view<br>of a weight</h1>
+  <p>§2.6 reframes "training" as <b>inference</b>: a parameter isn't a number to find, it's a belief to update.
+  This page builds that intuition for <b>2.6.1 (model parameters)</b> and <b>2.6.2 (regularization as MAP)</b>,
+  then cashes it out in the LLM tricks it secretly explains — <b>ensembles, model soups / SWA, weight decay,
+  AdamW, and LoRA</b>. Everything is live; drag and slide.</p>
+</header>
+
+<!-- ===================================================================== -->
+<section id="update">
+  <h2><span class="num">2.6.1</span>From a number to a belief: posterior ∝ likelihood × prior</h2>
+  <p class="lead">Bayes treats the parameters $\mathbf w$ as a <b>random variable</b>. You start with a
+  <span class="cc-blue">prior</span> belief, the <span class="cc-gold">data</span> reweights it through the
+  likelihood, and the product (renormalized) is the <span class="cc-teal">posterior</span>:</p>
+  <div class="eqbox">$$\underbrace{\textcolor{#54d6bd}{p(\mathbf w|\mathcal D)}}_{\text{posterior}}=\frac{\overbrace{\textcolor{#f6c945}{p(\mathcal D|\mathbf w)}}^{\text{likelihood}}\;\overbrace{\textcolor{#5ec8e8}{p(\mathbf w)}}^{\text{prior}}}{\underbrace{p(\mathcal D)}_{\text{evidence}}}\;\;\propto\;\;\textcolor{#f6c945}{p(\mathcal D|\mathbf w)}\,\textcolor{#5ec8e8}{p(\mathbf w)}$$</div>
+
+  <p class="small">Toy problem: infer the unknown mean $\mu$ of data with known noise $\sigma^2{=}1$. Prior
+  $\textcolor{#5ec8e8}{\mu\sim\mathcal N(0,s^2)}$. With $N$ points of sample-mean $\bar x$, the posterior is Gaussian
+  with mean $\textcolor{#54d6bd}{\mu_N}=\bar x\,\frac{N}{N+1/s^2}$ — a tug-of-war between 0 and the data.</p>
+
+  <div class="fig">
+    <canvas id="cv_update"></canvas>
+    <div class="legend">
+      <span><i style="background:#5ec8e8"></i> prior $p(\mu)$</span>
+      <span><i style="background:#f6c945"></i> likelihood $p(\mathcal D|\mu)$</span>
+      <span><i style="background:#54d6bd"></i> posterior $p(\mu|\mathcal D)$</span>
+    </div>
+    <div class="ctrls">
+      <div class="ctrl"><label>observed mean x̄ <span class="v" id="v_xbar">1.50</span></label>
+        <input id="sl_xbar" type="range" min="-3" max="3" step="0.01" value="1.5"></div>
+      <div class="ctrl"><label># data points N <span class="v" id="v_N">3</span></label>
+        <input id="sl_N" type="range" min="1" max="60" step="1" value="3"></div>
+      <div class="ctrl"><label>prior width s <span class="v" id="v_s">1.00</span></label>
+        <input id="sl_s" type="range" min="0.2" max="3" step="0.01" value="1"></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><div class="lab">posterior mean μ_N</div><div class="num" id="ro_pm" style="color:#54d6bd">—</div></div>
+      <div class="ro"><div class="lab">posterior std</div><div class="num" id="ro_ps" style="color:#54d6bd">—</div></div>
+      <div class="ro"><div class="lab">weight on data</div><div class="num" id="ro_dw" style="color:#f6c945">—</div></div>
+    </div>
+    <div class="figcap"><b>Add data</b> (slide $N$ up) and the <span class="cc-teal">posterior</span> marches from the
+    <span class="cc-blue">prior</span> toward the <span class="cc-gold">data</span> and gets narrower —
+    certainty grows. <b>Tighten the prior</b> (small $s$) and it resists the data longer. This <i>is</i> learning:
+    the prior is your init/regularizer, the likelihood is your loss, the posterior is what you should believe.</div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section id="predict">
+  <h2><span class="num">2.6.1</span>Why a point estimate throws away information</h2>
+  <p class="lead">Standard training returns one winner $\mathbf w_{\text{ML}}$. The Bayesian predictive instead
+  <b>integrates over every plausible $\mathbf w$, weighted by the posterior</b>:</p>
+  <div class="eqbox">$$p(t|x,\mathcal D)=\int \underbrace{p(t|x,\textcolor{#54d6bd}{\mathbf w})}_{\text{one model}}\;\underbrace{\textcolor{#54d6bd}{p(\mathbf w|\mathcal D)}}_{\text{its weight}}\,d\mathbf w$$</div>
+  <p>The payoff is honest <b>uncertainty</b>: where data is dense, all plausible models agree (tight band); where
+  data is absent, they fan out (wide band). A single point estimate is blind to this — it draws one confident line
+  through regions it knows nothing about.</p>
+
+  <div class="fig">
+    <canvas id="cv_breg"></canvas>
+    <div class="legend">
+      <span><i style="background:#f6c945"></i> data (click to add)</span>
+      <span><i style="background:#54d6bd"></i> predictive mean (the "point estimate")</span>
+      <span><i style="background:#54d6bd;opacity:.35"></i> ±2σ posterior band</span>
+      <span><i style="background:#c08cf0"></i> functions sampled from the posterior</span>
+    </div>
+    <div class="ctrls">
+      <button id="b_unc" class="active">uncertainty: ON</button>
+      <button id="b_clear">clear data</button>
+      <div class="ctrl"><label>prior precision α (smoothness) <span class="v" id="v_alpha">2.0</span></label>
+        <input id="sl_alpha" type="range" min="0.2" max="30" step="0.1" value="2"></div>
+      <div class="ctrl"><label>noise precision β <span class="v" id="v_beta">25</span></label>
+        <input id="sl_beta" type="range" min="4" max="200" step="1" value="25"></div>
+    </div>
+    <div class="figcap"><b>Click anywhere on the plot to drop a data point.</b> The
+    <span class="cc-teal">predictive band</span> tightens around your points and balloons in the gaps — that flare
+    is <b>epistemic uncertainty</b>, the part the model could erase with more data. The <span class="cc-purple">purple
+    spaghetti</span> are individual functions drawn from the posterior over $\mathbf w$; the integral above is just
+    their average. Toggle the band off to see how naked a point estimate really is.</div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section id="average">
+  <h2><span class="num">2.6.1</span>You can't integrate a billion parameters — so you sample them<span class="tag llm">LLM</span></h2>
+  <p class="lead">That integral over $\mathbf w$ is hopeless at LLM scale. Every practical "uncertainty" trick is a
+  cheap discrete stand-in for it:</p>
+  <ul>
+    <li><b>Deep ensembles</b> — train $K$ models, average predictions ≈ a $K$-sample Monte-Carlo estimate of the posterior integral.</li>
+    <li><b>Model soups / SWA</b> — average the <i>weights</i> of several checkpoints into one model. Far cheaper (one model at inference) but only valid when the checkpoints sit in a <b>connected low-loss basin</b>.</li>
+    <li><b>LoRA ensembles</b> — average a handful of cheap adapters for the same effect during fine-tuning.</li>
+  </ul>
+  <p>The catch lives in <b>weight space</b>. Averaging predictions is always safe; averaging <i>weights</i> is only
+  safe along a low-loss path between the points (<b>linear mode connectivity</b>).</p>
+
+  <div class="fig">
+    <div class="grid2">
+      <div><canvas id="cv_land"></canvas></div>
+      <div><canvas id="cv_prof"></canvas></div>
+    </div>
+    <div class="ctrls">
+      <button id="b_same" class="accent">▶ same basin (soup works)</button>
+      <button id="b_diff" class="warm">▶ different basins (soup breaks)</button>
+    </div>
+    <div class="readouts">
+      <div class="ro"><div class="lab">loss at soup (avg weights)</div><div class="num" id="ro_soup" style="color:#54d6bd">—</div></div>
+      <div class="ro"><div class="lab">barrier on the path</div><div class="num" id="ro_bar" style="color:#fc6a5d">—</div></div>
+    </div>
+    <div class="figcap"><b>Left:</b> a loss landscape with two basins; <b>drag the two
+    <span class="cc-gold">checkpoints</span></b>. Their midpoint — the <span class="cc-teal">soup</span> — is marked.
+    <b>Right:</b> loss along the straight line between them. Inside one basin the path stays low and the soup is a
+    great model. Across basins a <span class="cc-red">barrier</span> appears and the averaged weights land on a hill —
+    a broken model. <i>That's</i> when you ensemble predictions instead of souping weights.</div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section id="map">
+  <h2><span class="num">2.6.2</span>Regularization is just a prior in disguise</h2>
+  <p class="lead">Take $-\ln$ of the posterior and the product becomes a sum — your <span class="cc-gold">loss</span>
+  plus a <span class="cc-purple">penalty</span> that is literally the negative log-prior:</p>
+  <div class="eqbox">$$-\ln \textcolor{#54d6bd}{p(\mathbf w|\mathcal D)}=\underbrace{-\ln \textcolor{#f6c945}{p(\mathcal D|\mathbf w)}}_{\text{data loss}}\;\underbrace{-\ln \textcolor{#c08cf0}{p(\mathbf w)}}_{\text{regularizer}}+\,\text{const}$$</div>
+  <p>A <span class="cc-blue">Gaussian prior</span> $\mathcal N(0,s^2)$ gives the penalty
+  $\textcolor{#c08cf0}{\tfrac{1}{2s^2}\sum_i w_i^2}$ — exactly <b>$L_2$ / weight decay</b>, with
+  $\lambda=\tfrac{1}{2s^2}$. A <b>Laplace prior</b> gives $\textcolor{#c08cf0}{\lambda\sum_i|w_i|}$ — $L_1$, which
+  prefers exact zeros (sparsity). <b>MAP</b> is the peak of the posterior: where loss + penalty is smallest.</p>
+
+  <div class="fig">
+    <canvas id="cv_map1d"></canvas>
+    <div class="ctrls">
+      <button id="b_l2" class="active">Gaussian prior → L2</button>
+      <button id="b_l1">Laplace prior → L1</button>
+      <div class="ctrl"><label>regularization λ = 1/2s² <span class="v" id="v_lam">0.8</span></label>
+        <input id="sl_lam" type="range" min="0" max="6" step="0.01" value="0.8"></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><div class="lab">unregularized w_ML</div><div class="num" id="ro_wml" style="color:#f6c945">2.00</div></div>
+      <div class="ro"><div class="lab">MAP estimate w*</div><div class="num" id="ro_wmap" style="color:#fc6a5d">—</div></div>
+    </div>
+    <div class="figcap"><b>The <span class="cc-teal">total</span> is the <span class="cc-gold">data loss</span> plus the
+    <span class="cc-purple">prior penalty</span>.</b> Crank $\lambda$ and the <span class="cc-red">MAP optimum</span>
+    slides from $w_{\text{ML}}$ toward 0 — that's weight decay shrinking the weight. Switch to the
+    <b>Laplace/L1</b> penalty and watch its sharp "V" eventually pin the weight <i>exactly</i> at 0 (the Gaussian
+    only ever shrinks it).</div>
+  </div>
+
+  <h3>The 2-D picture of why L1 zeroes weights</h3>
+  <div class="fig">
+    <div class="grid2">
+      <div><canvas id="cv_geo"></canvas></div>
+      <div>
+        <p style="margin-top:0">With two weights, the MAP estimate is where the <span class="cc-gold">loss
+        contours</span> first touch the prior's "budget" region. The <span class="cc-blue">$L_2$ ball</span> is round,
+        so contact is generically off-axis — both weights nonzero, just smaller. The <span class="cc-purple">$L_1$
+        diamond</span> has <b>corners on the axes</b>, and contours tend to hit a corner — so one weight snaps to
+        <b>exactly zero</b>. That geometry is the whole story of sparsity.</p>
+        <div class="ctrls">
+          <button id="b_geo_l2" class="active">L2 (ball)</button>
+          <button id="b_geo_l1">L1 (diamond)</button>
+          <div class="ctrl"><label>λ (shrink strength) <span class="v" id="v_lam2">1.0</span></label>
+            <input id="sl_lam2" type="range" min="0" max="8" step="0.01" value="1"></div>
+        </div>
+        <div class="readouts">
+          <div class="ro"><div class="lab">w₁*</div><div class="num" id="ro_w1" style="color:#fc6a5d">—</div></div>
+          <div class="ro"><div class="lab">w₂*</div><div class="num" id="ro_w2" style="color:#fc6a5d">—</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="figcap">The <span class="cc-red">red dot</span> is the MAP solution. Push $\lambda$ up under
+    <b>L1</b> and one coordinate hits 0 and <b>stays pinned</b> (a corner solution); under <b>L2</b> both just glide
+    toward the origin together, never quite reaching an axis.</div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section id="adamw">
+  <h2><span class="num">2.6.2</span>Why AdamW ≠ Adam + L2<span class="tag llm">LLM</span></h2>
+  <p class="lead">If weight decay is a Gaussian prior, you'd want it applied <b>uniformly</b> — every weight believed
+  equally likely to be near zero. Adam breaks that. Its update divides the gradient by a per-parameter scale
+  $\sqrt{\hat v}$ (the running gradient magnitude):</p>
+  <div class="eqbox">$$\textbf{Adam+L2:}\quad \mathbf w \leftarrow \mathbf w-\eta\,\frac{\hat m + \textcolor{#fc6a5d}{\lambda\mathbf w}}{\sqrt{\hat v}+\epsilon}\qquad\Rightarrow\qquad \text{effective decay}=\frac{\lambda}{\sqrt{\hat v}}$$</div>
+  <div class="eqbox">$$\textbf{AdamW:}\quad \mathbf w \leftarrow \mathbf w-\eta\,\frac{\hat m}{\sqrt{\hat v}+\epsilon}-\eta\,\textcolor{#54d6bd}{\lambda\mathbf w}\qquad\Rightarrow\qquad \text{effective decay}=\lambda$$</div>
+  <p>Folding $\lambda\mathbf w$ <i>inside</i> the $\sqrt{\hat v}$ division means <b>high-gradient weights get decayed
+  less</b> — the prior strength leaks out of your control. AdamW <span class="cc-teal">decouples</span> the decay so
+  it lands uniformly, as a Gaussian prior should.</p>
+  <p class="small">Toy: a 2-D weight whose data optimum is <span class="cc-gold">w★=(2.5, 2.5)</span> but whose loss is
+  <b>steep in $w_1$, flat in $w_2$</b> (so $\hat v_1\gg\hat v_2$). Decay should pull both toward the origin equally.</p>
+
+  <div class="fig">
+    <canvas id="cv_adam"></canvas>
+    <div class="legend">
+      <span><i style="background:#f6c945"></i> data optimum w★</span>
+      <span><i style="background:#54d6bd"></i> AdamW (decoupled)</span>
+      <span><i style="background:#fc6a5d"></i> Adam + L2 (coupled)</span>
+      <span><i style="background:#8a8a9c"></i> origin (the prior)</span>
+    </div>
+    <div class="ctrls">
+      <div class="ctrl"><label>weight decay λ <span class="v" id="v_wd">0.06</span></label>
+        <input id="sl_wd" type="range" min="0" max="0.2" step="0.002" value="0.06"></div>
+      <button id="b_runadam" class="accent">▶ re-run optimizers</button>
+    </div>
+    <div class="readouts">
+      <div class="ro"><div class="lab">AdamW final w</div><div class="num mono" id="ro_aw" style="color:#54d6bd;font-size:15px">—</div></div>
+      <div class="ro"><div class="lab">Adam+L2 final w</div><div class="num mono" id="ro_al" style="color:#fc6a5d;font-size:15px">—</div></div>
+    </div>
+    <div class="figcap">Both start together and chase <span class="cc-gold">w★</span>, but decay drags them back
+    toward the <span class="cc-grey">origin</span>. <b><span class="cc-teal">AdamW</span> shrinks both coordinates by the
+    same factor</b> (the dot lands on the line from w★ to the origin). <b><span class="cc-red">Adam+L2</span></b> barely
+    decays the steep $w_1$ direction (large $\sqrt{\hat v}$) while over-decaying the flat $w_2$ — it lands off that
+    line, distorting the model. Slide $\lambda$ up to exaggerate the split.</div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<section id="lora">
+  <h2><span class="num">2.6.2</span>LoRA is a low-rank prior on the update<span class="tag llm">LLM</span></h2>
+  <p class="lead">Weight decay is a weak, isotropic prior ("stay smallish"). <b>LoRA</b> imposes a far stronger
+  <b>structural</b> prior on the fine-tuning update: force it to be <b>low rank</b>,</p>
+  <div class="eqbox">$$\Delta W=\textcolor{#54d6bd}{B}\,\textcolor{#5ec8e8}{A},\qquad \textcolor{#54d6bd}{B}\in\mathbb R^{d\times r},\;\textcolor{#5ec8e8}{A}\in\mathbb R^{r\times d},\quad r\ll d$$</div>
+  <p>Instead of $d^2$ free numbers, you get $2dr$. The bet (Aghajanyan et al. 2021): <b>fine-tuning updates already
+  live in a tiny subspace</b>, so a rank-$r$ slice loses almost nothing. The figure shows a target update
+  <span class="cc-blue">$\Delta W$</span> and its best rank-$r$ approximation (truncated SVD) — the LoRA prior made
+  visible.</p>
+
+  <div class="fig">
+    <div class="grid2">
+      <div>
+        <div class="small" style="text-align:center;color:var(--blue);margin-bottom:6px">target ΔW (full rank)</div>
+        <canvas id="cv_lora_t"></canvas>
+      </div>
+      <div>
+        <div class="small" style="text-align:center;color:var(--teal);margin-bottom:6px">LoRA rank-r approximation</div>
+        <canvas id="cv_lora_a"></canvas>
+      </div>
+    </div>
+    <canvas id="cv_lora_spec" style="margin-top:16px"></canvas>
+    <div class="ctrls">
+      <div class="ctrl"><label>LoRA rank r <span class="v" id="v_rank">3</span></label>
+        <input id="sl_rank" type="range" min="1" max="24" step="1" value="3"></div>
+    </div>
+    <div class="readouts">
+      <div class="ro"><div class="lab">reconstruction error</div><div class="num" id="ro_err" style="color:#f49d52">—</div></div>
+      <div class="ro"><div class="lab">params: LoRA vs full</div><div class="num mono" id="ro_par" style="color:#54d6bd;font-size:15px">—</div></div>
+      <div class="ro"><div class="lab">compression</div><div class="num" id="ro_comp" style="color:#84d98a">—</div></div>
+    </div>
+    <div class="figcap"><b>The spectrum (bottom) is the whole argument.</b> The update's
+    <span class="cc-teal">singular values</span> decay fast, so the first few directions carry almost all of it; the
+    <span class="cc-grey">greyed</span> tail is what rank-$r$ discards. Slide $r$ up and the approximation snaps to the
+    target while the error plunges — at a fraction of the parameters. That steep spectrum is the empirical fact that
+    makes the low-rank prior cheap <i>and</i> nearly lossless.</div>
+  </div>
+
+  <div class="callout">
+    <div class="t">The thread tying §2.6 together</div>
+    A weight is a belief. <b>Training</b> sharpens the prior into a posterior (2.6.1). <b>Regularization</b> is the
+    prior's fingerprint on the loss (2.6.2). Everything else — ensembles and soups (sampling the posterior),
+    AdamW (applying the prior faithfully), LoRA (a strong structural prior) — is engineering around the one integral
+    we can't actually compute.
+  </div>
+  <div class="footer">DLFC §2.6 · interactive companion · pairs with the §2.5 information-theory page · drag everything</div>
+</section>
+</main>
+
+<script>
+"use strict";
+/* ---------- palette + small helpers (shared with the §2.5 page) ---------- */
+const C={bg:'#0c0c12',grid:'#23233a',axis:'#3a3a52',ink:'#e7e7f0',muted:'#9a9ab0',
+  blue:'#5ec8e8',yellow:'#f6c945',red:'#fc6a5d',green:'#84d98a',purple:'#c08cf0',teal:'#54d6bd',orange:'#f49d52'};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const fmt=(x,d=2)=>(Math.abs(x)<1e-9?0:x).toFixed(d);
+const gauss=(x,mu,s)=>Math.exp(-((x-mu)*(x-mu))/(2*s*s))/(s*Math.sqrt(2*Math.PI));
+const $=id=>document.getElementById(id);
+const dpr=()=>Math.min(window.devicePixelRatio||1,2);
+
+class Plot{
+  constructor(canvas,W,H,xr,yr,pad){
+    this.c=canvas;this.W=W;this.H=H;this.xr=xr;this.yr=yr;
+    this.pad=Object.assign({l:48,r:16,t:16,b:34},pad||{});
+    const d=dpr();canvas.width=W*d;canvas.height=H*d;
+    canvas.style.width='100%';canvas.style.maxWidth=W+'px';canvas.style.height='auto';
+    this.g=canvas.getContext('2d');this.g.scale(d,d);
+  }
+  X(x){return this.pad.l+(x-this.xr[0])/(this.xr[1]-this.xr[0])*(this.W-this.pad.l-this.pad.r);}
+  Y(y){return this.H-this.pad.b-(y-this.yr[0])/(this.yr[1]-this.yr[0])*(this.H-this.pad.t-this.pad.b);}
+  iX(px){return this.xr[0]+(px-this.pad.l)/(this.W-this.pad.l-this.pad.r)*(this.xr[1]-this.xr[0]);}
+  iY(py){return this.yr[0]+(this.H-this.pad.b-py)/(this.H-this.pad.t-this.pad.b)*(this.yr[1]-this.yr[0]);}
+  clear(){this.g.clearRect(0,0,this.W,this.H);}
+  grid(xs,ys){const g=this.g;g.strokeStyle=C.grid;g.lineWidth=1;
+    if(xs)xs.forEach(x=>{g.beginPath();g.moveTo(this.X(x),this.Y(this.yr[0]));g.lineTo(this.X(x),this.Y(this.yr[1]));g.stroke();});
+    if(ys)ys.forEach(y=>{g.beginPath();g.moveTo(this.X(this.xr[0]),this.Y(y));g.lineTo(this.X(this.xr[1]),this.Y(y));g.stroke();});}
+  axes(opt){opt=opt||{};const g=this.g;g.strokeStyle=C.axis;g.lineWidth=1.4;
+    const y0=this.yr[0]<=0&&this.yr[1]>=0?0:this.yr[0];
+    const x0=0>=this.xr[0]&&0<=this.xr[1]?0:this.xr[0];
+    g.beginPath();g.moveTo(this.X(this.xr[0]),this.Y(y0));g.lineTo(this.X(this.xr[1]),this.Y(y0));g.stroke();
+    g.beginPath();g.moveTo(this.X(x0),this.Y(this.yr[0]));g.lineTo(this.X(x0),this.Y(this.yr[1]));g.stroke();
+    g.fillStyle=C.muted;g.font='12px ui-monospace,monospace';
+    if(opt.xticks)opt.xticks.forEach(t=>{g.textAlign='center';g.textBaseline='top';
+      g.fillText(t.l!==undefined?t.l:t,this.X(t.x!==undefined?t.x:t),this.Y(y0)+6);});
+    if(opt.yticks)opt.yticks.forEach(t=>{g.textAlign='right';g.textBaseline='middle';
+      g.fillText(t.l!==undefined?t.l:t,this.X(x0)-7,this.Y(t.y!==undefined?t.y:t));});
+    if(opt.xlabel){g.fillStyle=C.muted;g.textAlign='right';g.textBaseline='bottom';g.font='12px Inter,sans-serif';g.fillText(opt.xlabel,this.W-this.pad.r,this.H-2);}
+    if(opt.ylabel){g.save();g.translate(13,this.pad.t+4);g.rotate(-Math.PI/2);g.textAlign='right';g.textBaseline='top';g.fillStyle=C.muted;g.font='12px Inter,sans-serif';g.fillText(opt.ylabel,0,0);g.restore();}
+  }
+  curve(fn,color,lw,glow){const g=this.g;g.save();g.beginPath();const N=400;
+    for(let i=0;i<=N;i++){const x=this.xr[0]+(this.xr[1]-this.xr[0])*i/N;const y=fn(x);
+      const px=this.X(x),py=this.Y(clamp(y,this.yr[0]-9,this.yr[1]+9));i?g.lineTo(px,py):g.moveTo(px,py);}
+    g.strokeStyle=color;g.lineWidth=lw||2.2;if(glow){g.shadowColor=color;g.shadowBlur=10;}g.stroke();g.restore();}
+  fillUnder(fn,color,base){const g=this.g;g.save();g.beginPath();const N=400;const b=base===undefined?this.yr[0]:base;
+    g.moveTo(this.X(this.xr[0]),this.Y(b));
+    for(let i=0;i<=N;i++){const x=this.xr[0]+(this.xr[1]-this.xr[0])*i/N;g.lineTo(this.X(x),this.Y(clamp(fn(x),this.yr[0],this.yr[1])));}
+    g.lineTo(this.X(this.xr[1]),this.Y(b));g.closePath();g.fillStyle=color;g.fill();g.restore();}
+  dot(x,y,r,color){const g=this.g;g.beginPath();g.arc(this.X(x),this.Y(y),r,0,7);g.fillStyle=color;g.shadowColor=color;g.shadowBlur=12;g.fill();g.shadowBlur=0;}
+  label(x,y,txt,color,align){const g=this.g;g.fillStyle=color;g.font='13px Inter,sans-serif';g.textAlign=align||'left';g.textBaseline='middle';g.fillText(txt,this.X(x),this.Y(y));}
+}
+function pointer(canvas,ev){const r=canvas.getBoundingClientRect();const d=dpr();
+  const lx=canvas.width/d,ly=canvas.height/d;
+  return {x:(ev.clientX-r.left)/r.width*lx,y:(ev.clientY-r.top)/r.height*ly};}
+
+/* ---------- linear algebra (for Bayesian regression + LoRA) ---------- */
+function zeros(n){return Array(n).fill(0);}
+function eye(n){return Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?1:0));}
+function transpose(A){return A[0].map((_,j)=>A.map(r=>r[j]));}
+function matMul(A,B){const m=A.length,n=B.length,p=B[0].length;const Cm=Array.from({length:m},()=>zeros(p));
+  for(let i=0;i<m;i++)for(let k=0;k<n;k++){const a=A[i][k];for(let j=0;j<p;j++)Cm[i][j]+=a*B[k][j];}return Cm;}
+function matVec(A,x){return A.map(r=>r.reduce((s,a,j)=>s+a*x[j],0));}
+function matInv(M){const n=M.length;const A=M.map((r,i)=>r.concat(Array.from({length:n},(_,j)=>i===j?1:0)));
+  for(let c=0;c<n;c++){let piv=c;for(let r=c+1;r<n;r++)if(Math.abs(A[r][c])>Math.abs(A[piv][c]))piv=r;
+    [A[c],A[piv]]=[A[piv],A[c]];const d=A[c][c];if(Math.abs(d)<1e-12)continue;
+    for(let j=0;j<2*n;j++)A[c][j]/=d;
+    for(let r=0;r<n;r++)if(r!==c){const f=A[r][c];for(let j=0;j<2*n;j++)A[r][j]-=f*A[c][j];}}
+  return A.map(r=>r.slice(n));}
+function chol(M){const n=M.length;const L=Array.from({length:n},()=>zeros(n));
+  for(let i=0;i<n;i++)for(let j=0;j<=i;j++){let s=M[i][j];for(let k=0;k<j;k++)s-=L[i][k]*L[j][k];
+    if(i===j)L[i][j]=Math.sqrt(Math.max(s,1e-10));else L[i][j]=s/(L[j][j]||1e-10);}return L;}
+/* seeded RNG for reproducible figures */
+let _seed=987654321;
+function srand(){_seed=(_seed*1664525+1013904223)&0x7fffffff;return _seed/0x7fffffff;}
+function srandn(){let u=0,v=0;while(!u)u=srand();while(!v)v=srand();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+
+/* ===================== 2.6.1 · POSTERIOR UPDATE ===================== */
+(function(){
+  const P=new Plot($('cv_update'),900,330,[-4,4],[0,1.5],{l:42,b:34,t:16});
+  const sX=$('sl_xbar'),sN=$('sl_N'),sS=$('sl_s');
+  function draw(){
+    const xbar=+sX.value,N=+sN.value,s=+sS.value;
+    const lam=1/(s*s)+N, muP=N*xbar/lam, sdP=Math.sqrt(1/lam), likeSd=Math.sqrt(1/N);
+    P.clear();P.grid([-2,0,2],[0.5,1]);
+    P.axes({xticks:[-4,-2,0,2,4],yticks:[0,0.5,1,1.5],xlabel:'μ (the unknown mean)',ylabel:'density'});
+    P.fillUnder(x=>clamp(gauss(x,0,s),0,1.5),'#5ec8e818');
+    P.curve(x=>gauss(x,0,s),C.blue,2.4,true);
+    P.curve(x=>gauss(x,xbar,likeSd),C.yellow,2.4,true);
+    P.fillUnder(x=>clamp(gauss(x,muP,sdP),0,1.5),'#54d6bd22');
+    P.curve(x=>gauss(x,muP,sdP),C.teal,2.8,true);
+    // data mean tick
+    P.g.strokeStyle=C.yellow;P.g.setLineDash([3,3]);P.g.beginPath();P.g.moveTo(P.X(xbar),P.Y(0));P.g.lineTo(P.X(xbar),P.Y(1.5));P.g.stroke();P.g.setLineDash([]);
+    $('v_xbar').textContent=fmt(xbar,2);$('v_N').textContent=N;$('v_s').textContent=fmt(s,2);
+    $('ro_pm').textContent=fmt(muP,2);$('ro_ps').textContent=fmt(sdP,3);$('ro_dw').textContent=fmt(N/lam,2);
+  }
+  [sX,sN,sS].forEach(s=>s.addEventListener('input',draw));draw();
+})();
+
+/* ===================== 2.6.1 · BAYESIAN REGRESSION ===================== */
+(function(){
+  const P=new Plot($('cv_breg'),900,400,[-1.2,1.2],[-1.7,1.7],{l:44,b:34,t:16});
+  const cw=$('cv_breg');
+  const centers=[];for(let i=0;i<9;i++)centers.push(-1+2*i/8);
+  const width=0.22, M=centers.length+1;
+  function phi(x){return [1,...centers.map(c=>Math.exp(-((x-c)*(x-c))/(2*width*width)))];}
+  let X=[-0.8,-0.35,0.15,0.6], T=X.map(x=>0.85*Math.sin(2.6*x));
+  let alpha=2, beta=25, showUnc=true;
+  function fit(){
+    if(X.length===0){const SN=eye(M).map(r=>r.map(v=>v/alpha));return {SN,mN:zeros(M),L:chol(SN)};}
+    const Phi=X.map(phi),PhiT=transpose(Phi);
+    const A=eye(M).map((r,i)=>r.map((v,j)=>alpha*v+beta*Phi.reduce((s,row)=>s+row[i]*row[j],0)));
+    const SN=matInv(A);
+    const mN=matVec(SN,matVec(PhiT,T)).map(v=>beta*v);
+    return {SN,mN,L:chol(SN)};
+  }
+  function predMean(p,mN){return p.reduce((s,v,i)=>s+v*mN[i],0);}
+  function predVar(p,SN){let q=0;for(let i=0;i<p.length;i++){let r=0;for(let j=0;j<p.length;j++)r+=SN[i][j]*p[j];q+=p[i]*r;}return 1/beta+q;}
+  function draw(){
+    const {SN,mN,L}=fit();
+    P.clear();P.grid([-1,-0.5,0,0.5,1],[-1,0,1]);
+    P.axes({xticks:[-1,0,1],yticks:[{y:-1,l:'−1'},0,1],xlabel:'x',ylabel:'t'});
+    const N=160, xs=[],mean=[],sd=[];
+    for(let i=0;i<=N;i++){const x=-1.2+2.4*i/N;const p=phi(x);xs.push(x);mean.push(predMean(p,mN));sd.push(Math.sqrt(Math.max(predVar(p,SN),0)));}
+    if(showUnc){
+      const g=P.g;g.beginPath();
+      for(let i=0;i<=N;i++)g.lineTo(P.X(xs[i]),P.Y(clamp(mean[i]+2*sd[i],-1.7,1.7)));
+      for(let i=N;i>=0;i--)g.lineTo(P.X(xs[i]),P.Y(clamp(mean[i]-2*sd[i],-1.7,1.7)));
+      g.closePath();g.fillStyle='#54d6bd22';g.fill();
+      // posterior sample functions
+      for(let s=0;s<8;s++){const z=Array.from({length:M},()=>srandn());
+        const w=mN.map((m,i)=>{let acc=m;for(let j=0;j<=i;j++)acc+=L[i][j]*z[j];return acc;});
+        g.beginPath();for(let i=0;i<=N;i++){const y=clamp(phi(xs[i]).reduce((a,v,k)=>a+v*w[k],0),-1.7,1.7);i?g.lineTo(P.X(xs[i]),P.Y(y)):g.moveTo(P.X(xs[i]),P.Y(y));}
+        g.strokeStyle='#c08cf055';g.lineWidth=1;g.stroke();}
+    }
+    P.curve(x=>clamp(phi(x).reduce((a,v,k)=>a+v*mN[k],0),-1.7,1.7),C.teal,2.8,true);
+    X.forEach((x,i)=>{P.g.fillStyle=C.yellow;P.g.beginPath();P.g.arc(P.X(x),P.Y(clamp(T[i],-1.7,1.7)),4.5,0,7);P.g.fill();
+      P.g.strokeStyle='#000';P.g.lineWidth=1;P.g.stroke();});
+    $('v_alpha').textContent=fmt(alpha,1);$('v_beta').textContent=beta;
+  }
+  cw.addEventListener('click',e=>{const m=pointer(cw,e);const x=P.iX(m.x),y=P.iY(m.y);
+    if(x>-1.2&&x<1.2&&y>-1.7&&y<1.7){X.push(x);T.push(y);_seed=987654321;draw();}});
+  $('b_unc').addEventListener('click',()=>{showUnc=!showUnc;$('b_unc').textContent='uncertainty: '+(showUnc?'ON':'OFF');$('b_unc').classList.toggle('active',showUnc);draw();});
+  $('b_clear').addEventListener('click',()=>{X=[];T=[];_seed=987654321;draw();});
+  $('sl_alpha').addEventListener('input',e=>{alpha=+e.target.value;_seed=987654321;draw();});
+  $('sl_beta').addEventListener('input',e=>{beta=+e.target.value;_seed=987654321;draw();});
+  draw();
+})();
+
+/* ===================== 2.6.1 · WEIGHT AVERAGING / MODE CONNECTIVITY ===================== */
+(function(){
+  const Pl=new Plot($('cv_land'),440,340,[-3,3],[-3,3],{l:30,b:28,t:14,r:14});
+  const Pp=new Plot($('cv_prof'),440,340,[0,1],[-1.1,0.6],{l:42,b:34,t:14,r:14});
+  const cw=$('cv_land');
+  const wells=[{c:[-1.4,-0.6],A:1.0,s:0.62},{c:[1.4,0.6],A:0.92,s:0.62}];
+  function loss(x,y){let L=0.05*(x*x+y*y);for(const w of wells){const dx=x-w.c[0],dy=y-w.c[1];L-=w.A*Math.exp(-(dx*dx+dy*dy)/(2*w.s*w.s));}return L;}
+  let A=[-1.4,-0.6], B=[-0.6,-1.0], drag=-1;
+  // precompute landscape min/max
+  let lmin=9,lmax=-9;for(let i=0;i<=60;i++)for(let j=0;j<=60;j++){const L=loss(-3+6*i/60,-3+6*j/60);if(L<lmin)lmin=L;if(L>lmax)lmax=L;}
+  function lcolor(L){const t=clamp((L-lmin)/(lmax-lmin),0,1);// 0 low loss -> teal bright, 1 high -> dark
+    const lo=[40,150,140], hi=[12,12,22];const r=Math.round(hi[0]+(lo[0]-hi[0])*(1-t)),g=Math.round(hi[1]+(lo[1]-hi[1])*(1-t)),b=Math.round(hi[2]+(lo[2]-hi[2])*(1-t));
+    return `rgb(${r},${g},${b})`;}
+  function draw(){
+    // heatmap
+    Pl.clear();const G=72;const cwd=(Pl.X(3)-Pl.X(-3))/G,chd=(Pl.Y(-3)-Pl.Y(3))/G;
+    for(let i=0;i<G;i++)for(let j=0;j<G;j++){const x=-3+6*(i+0.5)/G,y=-3+6*(j+0.5)/G;
+      Pl.g.fillStyle=lcolor(loss(x,y));Pl.g.fillRect(Pl.X(-3)+i*cwd-0.5,Pl.Y(3)+j*chd-0.5,cwd+1,chd+1);}
+    // path
+    Pl.g.strokeStyle='#ffffffaa';Pl.g.lineWidth=1.5;Pl.g.setLineDash([5,4]);
+    Pl.g.beginPath();Pl.g.moveTo(Pl.X(A[0]),Pl.Y(A[1]));Pl.g.lineTo(Pl.X(B[0]),Pl.Y(B[1]));Pl.g.stroke();Pl.g.setLineDash([]);
+    const mid=[(A[0]+B[0])/2,(A[1]+B[1])/2];
+    [A,B].forEach(p=>{Pl.g.fillStyle=C.yellow;Pl.g.beginPath();Pl.g.arc(Pl.X(p[0]),Pl.Y(p[1]),6,0,7);Pl.g.fill();Pl.g.strokeStyle='#000';Pl.g.lineWidth=1.5;Pl.g.stroke();});
+    Pl.g.fillStyle=C.teal;Pl.g.beginPath();Pl.g.arc(Pl.X(mid[0]),Pl.Y(mid[1]),6.5,0,7);Pl.g.shadowColor=C.teal;Pl.g.shadowBlur=12;Pl.g.fill();Pl.g.shadowBlur=0;
+    Pl.g.fillStyle=C.ink;Pl.g.font='11px Inter';Pl.g.textAlign='center';Pl.g.fillText('soup',Pl.X(mid[0]),Pl.Y(mid[1])-11);
+    // profile
+    Pp.clear();Pp.grid([0.25,0.5,0.75],[-1,-0.5,0,0.5]);
+    Pp.axes({xticks:[{x:0,l:'A'},{x:0.5,l:'soup'},{x:1,l:'B'}],yticks:[{y:-1,l:'−1'},0],xlabel:'interpolation α',ylabel:'loss along weight-average path'});
+    let maxL=-9,la=loss(A[0],A[1]),lb=loss(B[0],B[1]);
+    Pp.curve(a=>{const L=loss(A[0]+(B[0]-A[0])*a,A[1]+(B[1]-A[1])*a);if(L>maxL)maxL=L;return L;},C.teal,2.6,true);
+    const lmid=loss(mid[0],mid[1]);
+    Pp.g.strokeStyle='#555';Pp.g.setLineDash([4,4]);Pp.g.beginPath();Pp.g.moveTo(Pp.X(0.5),Pp.Y(-1.1));Pp.g.lineTo(Pp.X(0.5),Pp.Y(lmid));Pp.g.stroke();Pp.g.setLineDash([]);
+    Pp.dot(0.5,lmid,5,C.teal);Pp.dot(0,la,4,C.yellow);Pp.dot(1,lb,4,C.yellow);
+    const barrier=maxL-Math.max(la,lb);
+    $('ro_soup').textContent=fmt(lmid,3);$('ro_bar').textContent=fmt(Math.max(0,barrier),3);
+  }
+  function near(p,m){return Math.hypot(Pl.X(p[0])-m.x,Pl.Y(p[1])-m.y)<16;}
+  cw.addEventListener('pointerdown',e=>{const m=pointer(cw,e);drag=near(A,m)?0:near(B,m)?1:-1;if(drag>=0)cw.setPointerCapture(e.pointerId);});
+  cw.addEventListener('pointermove',e=>{if(drag<0)return;const m=pointer(cw,e);const p=drag===0?A:B;p[0]=clamp(Pl.iX(m.x),-3,3);p[1]=clamp(Pl.iY(m.y),-3,3);draw();});
+  cw.addEventListener('pointerup',()=>drag=-1);cw.addEventListener('pointerleave',()=>drag=-1);
+  $('b_same').addEventListener('click',()=>{A=[-1.7,-0.5];B=[-1.0,-0.9];draw();});
+  $('b_diff').addEventListener('click',()=>{A=[-1.4,-0.6];B=[1.4,0.6];draw();});
+  draw();
+})();
+
+/* ===================== 2.6.2 · MAP = LOSS + PENALTY (1D) ===================== */
+(function(){
+  const P=new Plot($('cv_map1d'),900,360,[-1,4],[0,5],{l:42,b:34,t:16});
+  const sl=$('sl_lam');let mode='l2';const wML=2.0, curv=1.6;
+  function dataLoss(w){return 0.5*curv*(w-wML)*(w-wML);}
+  function penalty(w,lam){return mode==='l2'?lam*w*w:lam*Math.abs(w);} // (½/s²)·... folded into lam scale
+  function mapW(lam){ if(mode==='l2'){return curv*wML/(curv+2*lam);} // d/dw[½c(w-wML)²+λw²]=0
+    // L1: soft threshold of wML by lam/curv (wML>0)
+    return Math.max(0, wML - lam/curv);}
+  function draw(){
+    const lam=+sl.value;
+    P.clear();P.grid([0,1,2,3],[1,2,3,4]);
+    P.axes({xticks:[{x:-1,l:'−1'},0,1,2,3,4],yticks:[0,2,4],xlabel:'weight w',ylabel:'cost'});
+    P.curve(w=>clamp(dataLoss(w),0,5),C.yellow,2.4,true);
+    P.curve(w=>clamp(penalty(w,lam),0,5),C.purple,2.4,true);
+    P.curve(w=>clamp(dataLoss(w)+penalty(w,lam),0,5),C.teal,3,true);
+    const wm=mapW(lam);
+    P.g.strokeStyle=C.yellow;P.g.setLineDash([3,3]);P.g.beginPath();P.g.moveTo(P.X(wML),P.Y(0));P.g.lineTo(P.X(wML),P.Y(5));P.g.stroke();P.g.setLineDash([]);
+    P.dot(wm,clamp(dataLoss(wm)+penalty(wm,lam),0,5),6,C.red);
+    P.label(-0.9,4.6,'data loss',C.yellow);P.label(-0.9,4.2,'prior penalty',C.purple);P.label(-0.9,3.8,'total (posterior)',C.teal);
+    $('v_lam').textContent=fmt(lam,2);$('ro_wmap').textContent=fmt(wm,3);
+  }
+  sl.addEventListener('input',draw);
+  $('b_l2').addEventListener('click',()=>{mode='l2';$('b_l2').classList.add('active');$('b_l1').classList.remove('active');draw();});
+  $('b_l1').addEventListener('click',()=>{mode='l1';$('b_l1').classList.add('active');$('b_l2').classList.remove('active');draw();});
+  draw();
+})();
+
+/* ===================== 2.6.2 · L1 vs L2 GEOMETRY (2D) ===================== */
+(function(){
+  const P=new Plot($('cv_geo'),440,400,[-1.2,3.2],[-1.2,3.2],{l:36,b:30,t:14,r:14});
+  const sl=$('sl_lam2');let mode='l2';const wML=[2.4,1.4], h=[1.0,2.2]; // diagonal curvature
+  function solve(lam){ if(mode==='l2'){return wML.map((w,i)=>h[i]*w/(h[i]+2*lam));}
+    return wML.map((w,i)=>Math.sign(w)*Math.max(0,Math.abs(w)-lam/h[i]));}
+  function draw(){
+    const lam=+sl.value;const sol=solve(lam);
+    P.clear();
+    P.axes({xticks:[0,1,2,3],yticks:[0,1,2,3],xlabel:'w₁',ylabel:'w₂'});
+    // loss contours (ellipses) centered at wML
+    P.g.strokeStyle='#f6c94555';P.g.lineWidth=1.2;
+    [0.3,0.9,1.8,3.0,4.5].forEach(lv=>{P.g.beginPath();
+      for(let a=0;a<=64;a++){const th=2*Math.PI*a/64;const rx=Math.sqrt(2*lv/h[0]),ry=Math.sqrt(2*lv/h[1]);
+        const x=wML[0]+rx*Math.cos(th),y=wML[1]+ry*Math.sin(th);a?P.g.lineTo(P.X(x),P.Y(y)):P.g.moveTo(P.X(x),P.Y(y));}
+      P.g.closePath();P.g.stroke();});
+    // constraint region (size ~ from solution norm) — draw an indicative ball through the solution
+    const col=mode==='l2'?C.blue:C.purple;
+    P.g.strokeStyle=col;P.g.lineWidth=2;P.g.fillStyle=col+'18';
+    if(mode==='l2'){const R=Math.hypot(sol[0],sol[1]);P.g.beginPath();P.g.arc(P.X(0),P.Y(0),Math.abs(P.X(R)-P.X(0)),0,7);P.g.fill();P.g.stroke();}
+    else{const R=Math.abs(sol[0])+Math.abs(sol[1]);P.g.beginPath();
+      P.g.moveTo(P.X(R),P.Y(0));P.g.lineTo(P.X(0),P.Y(R));P.g.lineTo(P.X(-R),P.Y(0));P.g.lineTo(P.X(0),P.Y(-R));P.g.closePath();P.g.fill();P.g.stroke();}
+    P.dot(wML[0],wML[1],5,C.yellow);P.label(wML[0],wML[1]+0.28,'w_ML',C.yellow,'center');
+    P.dot(sol[0],sol[1],6.5,C.red);
+    $('v_lam2').textContent=fmt(lam,2);$('ro_w1').textContent=fmt(sol[0],3);$('ro_w2').textContent=fmt(sol[1],3);
+  }
+  sl.addEventListener('input',draw);
+  $('b_geo_l2').addEventListener('click',()=>{mode='l2';$('b_geo_l2').classList.add('active');$('b_geo_l1').classList.remove('active');draw();});
+  $('b_geo_l1').addEventListener('click',()=>{mode='l1';$('b_geo_l1').classList.add('active');$('b_geo_l2').classList.remove('active');draw();});
+  draw();
+})();
+
+/* ===================== 2.6.2 · ADAMW vs ADAM+L2 ===================== */
+(function(){
+  const P=new Plot($('cv_adam'),900,420,[-0.6,3.2],[-0.6,3.2],{l:40,b:34,t:16});
+  const sl=$('sl_wd');
+  const wstar=[2.5,2.5], a=7.0, b=0.5;  // steep in x, flat in y
+  function grad(w){return [a*(w[0]-wstar[0]), b*(w[1]-wstar[1])];}
+  function run(decoupled,lam){
+    let w=[0.15,0.15], m=[0,0], v=[0,0];const eta=0.06,b1=0.9,b2=0.999,eps=1e-8,T=400;const path=[w.slice()];
+    for(let t=1;t<=T;t++){const g=grad(w);
+      const gg=decoupled?g:[g[0]+lam*w[0], g[1]+lam*w[1]];
+      for(let i=0;i<2;i++){m[i]=b1*m[i]+(1-b1)*gg[i];v[i]=b2*v[i]+(1-b2)*gg[i]*gg[i];
+        const mh=m[i]/(1-Math.pow(b1,t)),vh=v[i]/(1-Math.pow(b2,t));
+        w[i]-=eta*mh/(Math.sqrt(vh)+eps);
+        if(decoupled)w[i]-=eta*lam*w[i];}
+      path.push(w.slice());}
+    return path;
+  }
+  function draw(){
+    const lam=+sl.value;const pAW=run(true,lam), pAL=run(false,lam);
+    P.clear();
+    P.axes({xticks:[0,1,2,3],yticks:[0,1,2,3],xlabel:'w₁  (steep / large √v̂)',ylabel:'w₂  (flat / small √v̂)'});
+    // contours of data loss
+    P.g.strokeStyle='#f6c94540';P.g.lineWidth=1;
+    [0.4,1.5,3.5,7].forEach(lv=>{P.g.beginPath();
+      for(let k=0;k<=64;k++){const th=2*Math.PI*k/64;const rx=Math.sqrt(2*lv/a),ry=Math.sqrt(2*lv/b);
+        const x=wstar[0]+rx*Math.cos(th),y=wstar[1]+ry*Math.sin(th);k?P.g.lineTo(P.X(x),P.Y(y)):P.g.moveTo(P.X(x),P.Y(y));}
+      P.g.closePath();P.g.stroke();});
+    // line from wstar to origin (the "uniform shrink" line)
+    P.g.strokeStyle='#54d6bd55';P.g.setLineDash([4,4]);P.g.beginPath();P.g.moveTo(P.X(0),P.Y(0));P.g.lineTo(P.X(wstar[0]),P.Y(wstar[1]));P.g.stroke();P.g.setLineDash([]);
+    function trace(path,col){P.g.strokeStyle=col;P.g.lineWidth=2;P.g.beginPath();
+      path.forEach((w,i)=>{i?P.g.lineTo(P.X(w[0]),P.Y(w[1])):P.g.moveTo(P.X(w[0]),P.Y(w[1]));});P.g.stroke();}
+    trace(pAL,C.red);trace(pAW,C.teal);
+    P.dot(0,0,5,C.muted);P.dot(wstar[0],wstar[1],6,C.yellow);
+    const ew=pAW[pAW.length-1], el=pAL[pAL.length-1];
+    P.dot(ew[0],ew[1],6,C.teal);P.dot(el[0],el[1],6,C.red);
+    $('v_wd').textContent=fmt(lam,3);
+    $('ro_aw').textContent='('+fmt(ew[0],2)+', '+fmt(ew[1],2)+')';
+    $('ro_al').textContent='('+fmt(el[0],2)+', '+fmt(el[1],2)+')';
+  }
+  sl.addEventListener('input',draw);$('b_runadam').addEventListener('click',draw);draw();
+})();
+
+/* ===================== 2.6.2 · LoRA LOW-RANK PRIOR ===================== */
+(function(){
+  const d=24, R=24;
+  // build orthonormal U,V (d×R) via seeded Gram-Schmidt; singular values decay -> low intrinsic rank
+  function gramSchmidt(){const cols=[];for(let k=0;k<R;k++){let v=Array.from({length:d},()=>srandn());
+    for(const u of cols){let dot=0;for(let i=0;i<d;i++)dot+=u[i]*v[i];for(let i=0;i<d;i++)v[i]-=dot*u[i];}
+    let n=Math.hypot(...v);v=v.map(x=>x/(n||1));cols.push(v);}return cols;}
+  _seed=11; const U=gramSchmidt(); const V=gramSchmidt();
+  const sv=[];for(let k=0;k<R;k++)sv.push(2.4*Math.exp(-k/1.2)+0.012);
+  const svTot2=sv.reduce((s,x)=>s+x*x,0);
+  function approx(r){const Wm=Array.from({length:d},()=>zeros(d));
+    for(let k=0;k<r;k++){const s=sv[k];for(let i=0;i<d;i++){const ui=s*U[k][i];for(let j=0;j<d;j++)Wm[i][j]+=ui*V[k][j];}}return Wm;}
+  const target=approx(R);
+  let tmax=0;for(let i=0;i<d;i++)for(let j=0;j<d;j++)tmax=Math.max(tmax,Math.abs(target[i][j]));
+  function cmap(v){const t=clamp(v/tmax,-1,1);// diverging blue<->orange
+    if(t>=0){const k=t;return `rgb(${Math.round(12+232*k)},${Math.round(20+137*k)},${Math.round(30+30*(1-k))})`;}
+    const k=-t;return `rgb(${Math.round(12+82*(1-k))},${Math.round(20+120*k)},${Math.round(30+200*k)})`;}
+  function heat(canvas,Wm){const W=300,H=300,dd=dpr();canvas.width=W*dd;canvas.height=H*dd;
+    canvas.style.width='100%';canvas.style.maxWidth=W+'px';canvas.style.height='auto';
+    const g=canvas.getContext('2d');g.scale(dd,dd);const cell=W/d;
+    for(let i=0;i<d;i++)for(let j=0;j<d;j++){g.fillStyle=cmap(Wm[i][j]);g.fillRect(j*cell,i*cell,cell+0.5,cell+0.5);}}
+  const Pspec=new Plot($('cv_lora_spec'),900,220,[0,R],[0,2.5],{l:40,b:30,t:14,r:14});
+  function drawSpec(r){
+    Pspec.clear();Pspec.grid(null,[0.5,1,1.5,2]);
+    Pspec.axes({yticks:[0,1,2],xlabel:'singular value index k',ylabel:'σ_k'});
+    const bw=(Pspec.X(1)-Pspec.X(0))*0.7;
+    for(let k=0;k<R;k++){const x=Pspec.X(k+0.15);const y=Pspec.Y(sv[k]),y0=Pspec.Y(0);
+      Pspec.g.fillStyle=k<r?C.teal:'#3a3a4e';Pspec.g.fillRect(x,y,bw,y0-y);}
+    Pspec.g.strokeStyle=C.teal;Pspec.g.setLineDash([4,4]);Pspec.g.beginPath();
+    Pspec.g.moveTo(Pspec.X(r),Pspec.Y(0));Pspec.g.lineTo(Pspec.X(r),Pspec.Y(2.5));Pspec.g.stroke();Pspec.g.setLineDash([]);
+    Pspec.label(r+0.3,2.3,'keep r='+r+'  ▸  discard tail',C.muted);
+  }
+  function draw(){
+    const r=+$('sl_rank').value;
+    heat($('cv_lora_t'),target);heat($('cv_lora_a'),approx(r));drawSpec(r);
+    let tail2=0;for(let k=r;k<R;k++)tail2+=sv[k]*sv[k];
+    const err=Math.sqrt(tail2/svTot2);
+    const pl=2*d*r, pf=d*d;
+    $('v_rank').textContent=r;
+    $('ro_err').textContent=fmt(err*100,1)+'%';
+    $('ro_par').textContent=pl+' / '+pf;
+    $('ro_comp').textContent=fmt(pf/pl,1)+'×';
+  }
+  $('sl_rank').addEventListener('input',draw);draw();
+})();
+</script>
+</body>
+</html>
