@@ -212,6 +212,9 @@ Setting the functional derivative to zero gives $p(x) = \exp\!\left\{-1 + \lambd
 
 ### 2.5.5 Kullback-Leibler Divergence (CRITICAL SECTION)
 
+[Six (and a half) intuitions for KL divergence](https://www.lesswrong.com/posts/no5jDTut5Byjqb4j5/six-and-a-half-intuitions-for-kl-divergence)
+[KL-Divergence as an Objective Function](https://timvieira.github.io/blog/kl-divergence-as-an-objective-function/)
+
 $$\text{KL}(p \| q) = -\int p(x) \ln\frac{q(x)}{p(x)}\,dx$$
 
 Properties:
